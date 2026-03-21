@@ -1,4 +1,5 @@
-/* Version #15 Mar 20, 2026 7:45 pm (ET) */
+/* Version #24 Mar 21, 2026 1:20 pm (ET) */
+
 const state = {
   currency: "€",
   days: 40,
@@ -8,6 +9,8 @@ const state = {
   foodEntries: [],
   accomJournal: ""
 };
+
+const FOOD_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack", "Drinks", "Other"];
 
 function getEl(id) {
   return document.getElementById(id);
@@ -25,6 +28,15 @@ function formatEntryDate(timestamp) {
     const day = d.getDate();
     const year = d.getFullYear();
     return `${weekday} ${month} ${day}, ${year}`;
+  } catch (err) {
+    return "";
+  }
+}
+
+function formatDeleteDate(timestamp) {
+  try {
+    const d = new Date(timestamp);
+    return d.toDateString();
   } catch (err) {
     return "";
   }
@@ -116,42 +128,101 @@ function parseDayInfo(dayValue) {
   };
 }
 
-function compareEntriesByCaminoDayThenTime(a, b) {
-  const dayA = parseDayInfo(a.day);
-  const dayB = parseDayInfo(b.day);
+function compareEntries(a, b) {
+  const da = parseDayInfo(a.day);
+  const db = parseDayInfo(b.day);
 
-  if (dayA.prefix === dayB.prefix && dayA.num !== -1 && dayB.num !== -1) {
-    if (dayB.num !== dayA.num) {
-      return dayB.num - dayA.num;
+  if (da.prefix === db.prefix && da.num !== -1 && db.num !== -1) {
+    if (db.num !== da.num) {
+      return db.num - da.num;
     }
   } else {
-    const dayTextCompare = String(b.day || "").localeCompare(String(a.day || ""));
-    if (dayTextCompare !== 0) {
-      return dayTextCompare;
+    const textCompare = String(b.day || "").localeCompare(String(a.day || ""));
+    if (textCompare !== 0) {
+      return textCompare;
     }
   }
 
-  const aTs = typeof a.timestamp === "number" ? a.timestamp : 0;
-  const bTs = typeof b.timestamp === "number" ? b.timestamp : 0;
-  return bTs - aTs;
+  return (b.timestamp || 0) - (a.timestamp || 0);
+}
+
+function normaliseDayNumberInput(value) {
+  const raw = String(value || "").trim().toUpperCase();
+
+  if (!raw) return "D1";
+
+  const match = raw.match(/^([A-Z]+)\s*(\d+)$/);
+  if (match) {
+    return match[1] + String(parseInt(match[2], 10));
+  }
+
+  return raw.replace(/\s+/g, "");
+}
+
+function changeDayNumber(step) {
+  syncInputsToState();
+
+  const info = parseDayInfo(state.dayNumber);
+
+  if (info.num === -1 || !info.prefix) {
+    state.dayNumber = "D1";
+  } else {
+    const nextNum = Math.max(1, info.num + step);
+    state.dayNumber = info.prefix + nextNum;
+  }
+
+  if (getEl("dayNumber")) {
+    getEl("dayNumber").value = state.dayNumber;
+  }
+
+  persistAll(false);
+  renderAll();
+}
+
+function setFoodAmount(value) {
+  const el = getEl("foodAmount");
+  if (!el) return;
+
+  const formatted = Number(value).toFixed(2);
+  el.value = formatted;
+  el.focus();
+
+  const dotIndex = formatted.indexOf(".");
+  if (dotIndex !== -1) {
+    const start = dotIndex + 1;
+    const end = formatted.length;
+
+    setTimeout(() => {
+      try {
+        el.setSelectionRange(start, end);
+      } catch (err) {
+        // Some browsers may not support selection on this input type.
+      }
+    }, 0);
+  } else {
+    el.select();
+  }
+}
+
+function clearFoodAmount() {
+  const el = getEl("foodAmount");
+  if (!el) return;
+
+  el.value = "";
+  el.focus();
 }
 
 function loadAll() {
   try {
     state.currency = localStorage.getItem("currency") || "€";
     state.days = parseInt(localStorage.getItem("days"), 10) || 40;
-    state.dayNumber = (localStorage.getItem("dayNumber") || "D1").trim().toUpperCase();
+    state.dayNumber = normaliseDayNumberInput(localStorage.getItem("dayNumber") || "D1");
     state.foodTotal = parseFloat(localStorage.getItem("foodTotal")) || 1500;
     state.accomTotal = parseFloat(localStorage.getItem("accomTotal")) || 1500;
     state.accomJournal = localStorage.getItem("accomJournal") || "";
 
-    const storedFood = localStorage.getItem("foodEntries");
-    if (storedFood) {
-      const parsed = JSON.parse(storedFood);
-      state.foodEntries = normalizeFoodEntries(parsed);
-    } else {
-      state.foodEntries = [];
-    }
+    const stored = localStorage.getItem("foodEntries");
+    state.foodEntries = stored ? normalizeFoodEntries(JSON.parse(stored)) : [];
   } catch (err) {
     console.error("loadAll error:", err);
     state.foodEntries = [];
@@ -165,13 +236,12 @@ function syncStateToInputs() {
   if (getEl("foodTotal")) getEl("foodTotal").value = state.foodTotal;
   if (getEl("accomTotal")) getEl("accomTotal").value = state.accomTotal;
   if (getEl("accomJournal")) getEl("accomJournal").value = state.accomJournal;
-  if (getEl("foodType")) getEl("foodType").value = "Breakfast";
 }
 
 function syncInputsToState() {
   if (getEl("currency")) state.currency = getEl("currency").value || "€";
   if (getEl("days")) state.days = parseInt(getEl("days").value, 10) || 1;
-  if (getEl("dayNumber")) state.dayNumber = (getEl("dayNumber").value || "D1").trim().toUpperCase();
+  if (getEl("dayNumber")) state.dayNumber = normaliseDayNumberInput(getEl("dayNumber").value || "D1");
   if (getEl("foodTotal")) state.foodTotal = parseFloat(getEl("foodTotal").value) || 0;
   if (getEl("accomTotal")) state.accomTotal = parseFloat(getEl("accomTotal").value) || 0;
   if (getEl("accomJournal")) state.accomJournal = getEl("accomJournal").value || "";
@@ -194,101 +264,93 @@ function persistAll(showAlert = false) {
 }
 
 function renderFoodList() {
-  const foodList = getEl("foodList");
-  if (!foodList) return;
+  const list = getEl("foodList");
+  if (!list) return;
 
-  foodList.innerHTML = "";
+  list.innerHTML = "";
 
   if (!state.foodEntries.length) {
-    foodList.innerHTML = "<div class='muted'>No food entries yet.</div>";
+    list.innerHTML = "<div class='muted'>No food entries yet.</div>";
     return;
   }
 
-  const sortedEntries = [...state.foodEntries].sort(compareEntriesByCaminoDayThenTime);
-
-  sortedEntries.forEach((entry) => {
-    const originalIndex = state.foodEntries.indexOf(entry);
-
+  [...state.foodEntries].sort(compareEntries).forEach(entry => {
     const row = document.createElement("div");
     row.className = "list-row";
 
-    const dayInfo = parseDayInfo(entry.day);
-    if (dayInfo.num !== -1) {
-      if (dayInfo.num % 2 === 0) {
-        row.classList.add("day-even");
-      } else {
-        row.classList.add("day-odd");
-      }
+    const info = parseDayInfo(entry.day);
+    if (info.num !== -1) {
+      row.classList.add(info.num % 2 ? "day-odd" : "day-even");
     }
 
-    const text = document.createElement("div");
-    text.className = "entry-text";
+    const entryText = document.createElement("div");
+    entryText.className = "entry-text";
 
-    const amount = parseFloat(entry.amount) || 0;
-    const dateLabel = formatEntryDate(entry.timestamp);
+    const main = document.createElement("span");
+    main.className = "entry-main";
+    main.textContent = `${entry.day} ${entry.text}`;
 
-    const mainPart = document.createElement("span");
-    mainPart.className = "entry-main";
-    mainPart.textContent = `${entry.day} ${entry.text}`;
+    const amount = document.createElement("span");
+    amount.className = "entry-amount";
+    amount.textContent = formatMoney(entry.amount);
 
-    const amountPart = document.createElement("span");
-    amountPart.className = "entry-amount";
-    amountPart.textContent = `${state.currency}${amount.toFixed(2)}`;
+    const date = document.createElement("span");
+    date.className = "entry-date";
+    date.textContent = formatEntryDate(entry.timestamp);
 
-    const datePart = document.createElement("span");
-    datePart.className = "entry-date";
-    datePart.textContent = dateLabel;
-
-    text.appendChild(mainPart);
-    text.appendChild(amountPart);
-    text.appendChild(datePart);
+    entryText.appendChild(main);
+    entryText.appendChild(amount);
+    entryText.appendChild(date);
 
     const btnWrap = document.createElement("div");
     btnWrap.className = "mini-buttons";
 
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.textContent = "Edit";
-    editBtn.onclick = function () {
-      editFoodEntry(originalIndex);
-    };
+    const index = state.foodEntries.indexOf(entry);
 
-    const delBtn = document.createElement("button");
-    delBtn.type = "button";
-    delBtn.textContent = "Delete";
-    delBtn.onclick = function () {
-      deleteFoodEntry(originalIndex);
-    };
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.textContent = "Edit";
+    edit.onclick = () => editFoodEntry(index);
 
-    btnWrap.appendChild(editBtn);
-    btnWrap.appendChild(delBtn);
+    const del = document.createElement("button");
+    del.type = "button";
+    del.textContent = "Delete";
+    del.onclick = () => deleteFoodEntry(index);
 
-    row.appendChild(text);
+    btnWrap.appendChild(edit);
+    btnWrap.appendChild(del);
+
+    row.appendChild(entryText);
     row.appendChild(btnWrap);
-    foodList.appendChild(row);
+    list.appendChild(row);
   });
 }
 
 function renderAll() {
   syncInputsToState();
 
+  const foodHeading = getEl("foodHeading");
+  if (foodHeading) {
+    foodHeading.innerHTML = `Food <span class="add-day-subtitle">- for ${state.dayNumber}</span>`;
+  }
+
   const addLabel = getEl("foodAddLabel");
   if (addLabel) {
-    addLabel.textContent = `Add Food Entry for ${state.dayNumber}:`;
+    addLabel.innerHTML = `Add Food Entry <span class="add-day-subtitle">- for ${state.dayNumber}</span>`;
   }
 
   const days = state.days || 1;
 
   const foodStartingDaily = state.foodTotal / days;
   const totalFoodSpent = sumFoodEntries(state.foodEntries);
-  const foodRemaining = Math.max(0, state.foodTotal - totalFoodSpent);
+  const foodRemaining = state.foodTotal - totalFoodSpent;
   const todayFoodSpent = sumFoodEntriesForDay(state.foodEntries, state.dayNumber);
-  const foodRemainingDaily = Math.max(0, foodStartingDaily - todayFoodSpent);
+  const foodRemainingDaily = foodStartingDaily - todayFoodSpent;
 
   const accomStartingDaily = state.accomTotal / days;
   const accomSpent = sumJournal(state.accomJournal);
-  const accomRemaining = Math.max(0, state.accomTotal - accomSpent);
-  const accomRemainingDaily = Math.max(0, accomStartingDaily - accomSpent);
+  const accomRemaining = state.accomTotal - accomSpent;
+  const accomRemainingDaily = accomStartingDaily - accomSpent;
 
   if (getEl("foodStartingDaily")) {
     getEl("foodStartingDaily").innerText =
@@ -307,7 +369,7 @@ function renderAll() {
 
   if (getEl("foodSpentToday")) {
     getEl("foodSpentToday").innerText =
-      "Spent Today:\n" + formatMoney(todayFoodSpent);
+      `Spent Today - ${state.dayNumber}:\n` + formatMoney(todayFoodSpent);
   }
 
   if (getEl("accomStartingDaily")) {
@@ -332,76 +394,64 @@ function addFoodEntry() {
   syncInputsToState();
 
   const typeEl = getEl("foodType");
-  const amtEl = getEl("foodAmount");
+  const amountEl = getEl("foodAmount");
 
-  if (!typeEl || !amtEl) {
-    alert("Food entry controls were not found on the page.");
+  if (!typeEl || !amountEl) {
+    alert("Food entry controls were not found.");
     return;
   }
 
-  const day = state.dayNumber;
-  const text = (typeEl.value || "Other").trim();
-  const amount = parseFloat(amtEl.value);
-
-  if (!day) {
-    alert("Enter a valid Day Number first.");
-    return;
-  }
-
-  if (!text) {
-    alert("Choose a food type.");
-    return;
-  }
+  const type = typeEl.value;
+  const amount = parseFloat(amountEl.value);
 
   if (isNaN(amount)) {
-    alert("Enter a valid food amount.");
+    alert("Enter amount.");
     return;
   }
 
   state.foodEntries.push({
-    day: day,
-    text: text,
+    day: state.dayNumber,
+    text: type,
     amount: Math.max(0, amount),
     timestamp: Date.now()
   });
 
-  typeEl.value = "Breakfast";
-  amtEl.value = "";
-
+  amountEl.value = "";
   persistAll(false);
   renderAll();
+  amountEl.focus();
 }
 
 function editFoodEntry(index) {
   const entry = state.foodEntries[index];
   if (!entry) return;
 
-  const currentTypes = ["Breakfast", "Lunch", "Dinner", "Snack", "Drink(s)", "Other"];
-  const choiceText =
-    "Edit type by number:\n1. Breakfast\n2. Lunch\n3. Dinner\n4. Snack\n5. Drink(s)\n6. Other";
+  const typePrompt =
+    "Edit type by number:\n1. Breakfast\n2. Lunch\n3. Dinner\n4. Snack\n5. Drinks\n6. Other";
 
-  let currentTypeIndex = currentTypes.indexOf(entry.text);
-  if (currentTypeIndex < 0) currentTypeIndex = 5;
+  let currentTypeIndex = FOOD_TYPES.indexOf(entry.text);
+  if (currentTypeIndex < 0) currentTypeIndex = FOOD_TYPES.length - 1;
 
-  const newTypeRaw = prompt(choiceText, String(currentTypeIndex + 1));
-  if (newTypeRaw === null) return;
+  const typeChoice = prompt(typePrompt, String(currentTypeIndex + 1));
+  if (typeChoice === null) return;
 
-  const choiceNum = parseInt(newTypeRaw, 10);
-  if (isNaN(choiceNum) || choiceNum < 1 || choiceNum > 6) {
+  const amountChoice = prompt("Amount:", String(entry.amount));
+  if (amountChoice === null) return;
+
+  const typeIndex = parseInt(typeChoice, 10);
+  const newAmount = parseFloat(amountChoice);
+
+  if (isNaN(typeIndex) || typeIndex < 1 || typeIndex > FOOD_TYPES.length) {
     alert("Choose a number from 1 to 6.");
     return;
   }
 
-  const newAmountRaw = prompt("Edit amount:", String(entry.amount));
-  if (newAmountRaw === null) return;
-
-  const newAmount = parseFloat(newAmountRaw);
   if (isNaN(newAmount)) {
     alert("Amount must be a number.");
     return;
   }
 
-  entry.text = currentTypes[choiceNum - 1];
+  entry.text = FOOD_TYPES[typeIndex - 1];
   entry.amount = Math.max(0, newAmount);
 
   persistAll(false);
@@ -412,9 +462,8 @@ function deleteFoodEntry(index) {
   const entry = state.foodEntries[index];
   if (!entry) return;
 
-  const confirmed = confirm(
-    `Delete this entry?\n\n${entry.day} ${entry.text} ${state.currency}${(parseFloat(entry.amount) || 0).toFixed(2)}`
-  );
+  const details = `${entry.day} ${entry.text} ${formatMoney(entry.amount)} ${formatDeleteDate(entry.timestamp)}`;
+  const confirmed = confirm(`Delete this food entry?\n\n${details}`);
 
   if (!confirmed) return;
 
@@ -423,57 +472,151 @@ function deleteFoodEntry(index) {
   renderAll();
 }
 
-function exportJSON() {
-  syncInputsToState();
+function wireQuickAmountButtons() {
+  const buttons = document.querySelectorAll(".quick-amount-btn[data-amount]");
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const amount = parseFloat(btn.getAttribute("data-amount"));
+      if (!isNaN(amount)) {
+        setFoodAmount(amount);
+      }
+    });
+  });
 
-  const exportData = {
-    currency: state.currency,
-    days: state.days,
-    dayNumber: state.dayNumber,
-    foodTotal: state.foodTotal,
-    accomTotal: state.accomTotal,
-    foodEntries: state.foodEntries,
-    accomJournal: state.accomJournal
-  };
-
-  prompt("Copy JSON:", JSON.stringify(exportData));
-}
-
-function importJSON() {
-  const json = prompt("Paste JSON:");
-  if (!json) return;
-
-  try {
-    const obj = JSON.parse(json);
-
-    state.currency = obj.currency === "$" ? "$" : "€";
-    state.days = parseInt(obj.days, 10) || 1;
-    state.dayNumber = (obj.dayNumber || "D1").toString().trim().toUpperCase();
-    state.foodTotal = parseFloat(obj.foodTotal) || 0;
-    state.accomTotal = parseFloat(obj.accomTotal) || 0;
-    state.accomJournal = String(obj.accomJournal || "");
-    state.foodEntries = normalizeFoodEntries(obj.foodEntries);
-
-    syncStateToInputs();
-    persistAll(false);
-    renderAll();
-    alert("Imported.");
-  } catch (err) {
-    alert("Invalid JSON");
+  const clearBtn = getEl("clearFoodAmountBtn");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", clearFoodAmount);
   }
 }
 
-function resetAll() {
-  if (confirm("This will clear all data. Continue?")) {
-    localStorage.removeItem("currency");
-    localStorage.removeItem("days");
-    localStorage.removeItem("dayNumber");
-    localStorage.removeItem("foodTotal");
-    localStorage.removeItem("accomTotal");
-    localStorage.removeItem("foodEntries");
-    localStorage.removeItem("accomJournal");
-    location.reload();
+function wireEvents() {
+  if (getEl("currency")) {
+    getEl("currency").addEventListener("change", () => {
+      persistAll(false);
+      renderAll();
+    });
   }
+
+  if (getEl("days")) {
+    getEl("days").addEventListener("input", () => {
+      persistAll(false);
+      renderAll();
+    });
+  }
+
+  if (getEl("dayNumber")) {
+    getEl("dayNumber").addEventListener("input", () => {
+      persistAll(false);
+      renderAll();
+    });
+  }
+
+  if (getEl("prevDayBtn")) {
+    getEl("prevDayBtn").addEventListener("click", () => changeDayNumber(-1));
+  }
+
+  if (getEl("nextDayBtn")) {
+    getEl("nextDayBtn").addEventListener("click", () => changeDayNumber(1));
+  }
+
+  if (getEl("foodTotal")) {
+    getEl("foodTotal").addEventListener("input", () => {
+      persistAll(false);
+      renderAll();
+    });
+  }
+
+  if (getEl("accomTotal")) {
+    getEl("accomTotal").addEventListener("input", () => {
+      persistAll(false);
+      renderAll();
+    });
+  }
+
+  if (getEl("accomJournal")) {
+    getEl("accomJournal").addEventListener("input", () => {
+      persistAll(false);
+      renderAll();
+    });
+  }
+
+  if (getEl("foodAmount")) {
+    getEl("foodAmount").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addFoodEntry();
+      }
+    });
+  }
+
+  if (getEl("addFoodBtn")) {
+    getEl("addFoodBtn").addEventListener("click", addFoodEntry);
+  }
+
+  if (getEl("saveBtn")) {
+    getEl("saveBtn").addEventListener("click", () => persistAll(true));
+  }
+
+  if (getEl("exportJsonBtn")) {
+    getEl("exportJsonBtn").addEventListener("click", () => {
+      syncInputsToState();
+
+      const exportData = {
+        currency: state.currency,
+        days: state.days,
+        dayNumber: state.dayNumber,
+        foodTotal: state.foodTotal,
+        accomTotal: state.accomTotal,
+        foodEntries: state.foodEntries,
+        accomJournal: state.accomJournal
+      };
+
+      prompt("Copy JSON:", JSON.stringify(exportData));
+    });
+  }
+
+  if (getEl("importJsonBtn")) {
+    getEl("importJsonBtn").addEventListener("click", () => {
+      const json = prompt("Paste JSON:");
+      if (!json) return;
+
+      try {
+        const obj = JSON.parse(json);
+
+        state.currency = obj.currency === "$" ? "$" : "€";
+        state.days = parseInt(obj.days, 10) || 1;
+        state.dayNumber = normaliseDayNumberInput(obj.dayNumber || "D1");
+        state.foodTotal = parseFloat(obj.foodTotal) || 0;
+        state.accomTotal = parseFloat(obj.accomTotal) || 0;
+        state.accomJournal = String(obj.accomJournal || "");
+        state.foodEntries = normalizeFoodEntries(obj.foodEntries);
+
+        syncStateToInputs();
+        persistAll(false);
+        renderAll();
+        alert("Imported.");
+      } catch (err) {
+        alert("Invalid JSON");
+      }
+    });
+  }
+
+  if (getEl("resetBtn")) {
+    getEl("resetBtn").addEventListener("click", () => {
+      if (!confirm("This will clear all data. Continue?")) return;
+
+      localStorage.removeItem("currency");
+      localStorage.removeItem("days");
+      localStorage.removeItem("dayNumber");
+      localStorage.removeItem("foodTotal");
+      localStorage.removeItem("accomTotal");
+      localStorage.removeItem("foodEntries");
+      localStorage.removeItem("accomJournal");
+      location.reload();
+    });
+  }
+
+  wireQuickAmountButtons();
 }
 
 function setFooterTimestamp() {
@@ -495,81 +638,10 @@ function setFooterTimestamp() {
   }
 }
 
-function wireEvents() {
-  if (getEl("currency")) {
-    getEl("currency").addEventListener("change", function () {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("days")) {
-    getEl("days").addEventListener("input", function () {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("dayNumber")) {
-    getEl("dayNumber").addEventListener("input", function () {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("foodTotal")) {
-    getEl("foodTotal").addEventListener("input", function () {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("accomTotal")) {
-    getEl("accomTotal").addEventListener("input", function () {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("accomJournal")) {
-    getEl("accomJournal").addEventListener("input", function () {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("addFoodBtn")) {
-    getEl("addFoodBtn").addEventListener("click", addFoodEntry);
-  }
-
-  if (getEl("saveBtn")) {
-    getEl("saveBtn").addEventListener("click", function () {
-      persistAll(true);
-    });
-  }
-
-  if (getEl("exportJsonBtn")) {
-    getEl("exportJsonBtn").addEventListener("click", exportJSON);
-  }
-
-  if (getEl("importJsonBtn")) {
-    getEl("importJsonBtn").addEventListener("click", importJSON);
-  }
-
-  if (getEl("resetBtn")) {
-    getEl("resetBtn").addEventListener("click", resetAll);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  try {
-    loadAll();
-    syncStateToInputs();
-    wireEvents();
-    setFooterTimestamp();
-    renderAll();
-  } catch (err) {
-    console.error("Startup error:", err);
-    alert("There is a JavaScript startup error. Open the browser console to see details.");
-  }
+document.addEventListener("DOMContentLoaded", () => {
+  loadAll();
+  syncStateToInputs();
+  wireEvents();
+  setFooterTimestamp();
+  renderAll();
 });
