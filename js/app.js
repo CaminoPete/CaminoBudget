@@ -1,4 +1,4 @@
-/* Version #24 Mar 21, 2026 1:20 pm (ET) */
+/* Version #24 Mar 21, 2026 1:20 pm (ET) XXX*/
 
 const state = {
   currency: "€",
