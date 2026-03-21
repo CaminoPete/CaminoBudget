@@ -41,6 +41,22 @@ h2 {
   color: #003366;
 }
 
+.section-subtitle {
+  font-size: 0.72em;
+  font-weight: normal;
+  color: #333;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.add-day-subtitle {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #333;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
 label {
   display: block;
   margin: 12px 0 6px 0;
@@ -77,6 +93,7 @@ button {
   background: #f3f3f3;
   padding: 10px 14px;
   cursor: pointer;
+  min-height: 44px;
 }
 
 button:active {
@@ -95,12 +112,42 @@ button:active {
   gap: 12px;
 }
 
+.top-fields-compact {
+  align-items: end;
+}
+
+.currency-block {
+  max-width: 180px;
+}
+
+.days-block {
+  min-width: 0;
+}
+
 .field-block {
   min-width: 0;
 }
 
 .narrow-field {
   max-width: 220px;
+}
+
+.day-control-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.day-control-row input {
+  text-align: center;
+  font-weight: bold;
+}
+
+.day-nav-btn {
+  white-space: nowrap;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .summary-grid {
@@ -116,6 +163,11 @@ button:active {
   border-radius: 10px;
   padding: 10px 12px;
   min-height: 66px;
+}
+
+.highlight-card {
+  background: #eef8ee;
+  border-color: #cfe4cf;
 }
 
 .output {
@@ -135,6 +187,31 @@ button:active {
 
 .entry-row button {
   white-space: nowrap;
+}
+
+.quick-add-wrap {
+  margin-top: 10px;
+}
+
+.quick-add-label {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.quick-add-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-amount-btn {
+  min-width: 58px;
+  padding: 10px 12px;
+}
+
+.quick-clear-btn {
+  min-width: 72px;
 }
 
 .listbox {
@@ -245,6 +322,14 @@ button:active {
     grid-template-columns: 1fr;
   }
 
+  .top-fields-compact {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+
+  .currency-block {
+    max-width: none;
+  }
+
   .narrow-field {
     max-width: none;
   }
@@ -271,5 +356,26 @@ button:active {
 
   .entry-date {
     white-space: normal;
+  }
+
+  .day-control-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .day-nav-btn {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .quick-add-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .quick-amount-btn,
+  .quick-clear-btn {
+    width: 100%;
+    min-width: 0;
   }
 }
