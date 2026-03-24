@@ -1,647 +1,928 @@
-/* Version #24 Mar 21, 2026 1:20 pm (ET) XXX*/
+// Version #30 Mar 24, 2026 12:30 PM
 
-const state = {
-  currency: "€",
-  days: 40,
-  dayNumber: "D1",
-  foodTotal: 1500,
-  accomTotal: 1500,
-  foodEntries: [],
-  accomJournal: ""
-};
+(function () {
+  "use strict";
 
-const FOOD_TYPES = ["Breakfast", "Lunch", "Dinner", "Snack", "Drinks", "Other"];
+  const STORAGE_KEY = "tripBudgetTrackerData_v25";
 
-function getEl(id) {
-  return document.getElementById(id);
-}
-
-function formatMoney(value) {
-  return state.currency + Number(value || 0).toFixed(2);
-}
-
-function formatEntryDate(timestamp) {
-  try {
-    const d = new Date(timestamp);
-    const weekday = d.toLocaleDateString("en-CA", { weekday: "short" });
-    const month = d.toLocaleDateString("en-CA", { month: "short" });
-    const day = d.getDate();
-    const year = d.getFullYear();
-    return `${weekday} ${month} ${day}, ${year}`;
-  } catch (err) {
-    return "";
-  }
-}
-
-function formatDeleteDate(timestamp) {
-  try {
-    const d = new Date(timestamp);
-    return d.toDateString();
-  } catch (err) {
-    return "";
-  }
-}
-
-function parseAmountFromLine(line) {
-  if (!line) return 0;
-
-  const cleaned = String(line)
-    .replace(/€/g, "")
-    .replace(/\$/g, "")
-    .replace(/,/g, "")
-    .trim();
-
-  const matches = cleaned.match(/-?\d+(\.\d+)?/g);
-  if (!matches || !matches.length) return 0;
-
-  const num = parseFloat(matches[matches.length - 1]);
-  return isNaN(num) ? 0 : num;
-}
-
-function sumJournal(text) {
-  if (!text) return 0;
-
-  return text
-    .split("\n")
-    .map(line => line.trim())
-    .filter(line => line !== "")
-    .reduce((sum, line) => sum + parseAmountFromLine(line), 0);
-}
-
-function sumFoodEntries(entries) {
-  if (!Array.isArray(entries)) return 0;
-
-  return entries.reduce((sum, entry) => {
-    return sum + (parseFloat(entry.amount) || 0);
-  }, 0);
-}
-
-function sumFoodEntriesForDay(entries, day) {
-  if (!Array.isArray(entries)) return 0;
-
-  const target = String(day || "").trim().toUpperCase();
-
-  return entries.reduce((sum, entry) => {
-    const entryDay = String(entry.day || "").trim().toUpperCase();
-    if (entryDay === target) {
-      return sum + (parseFloat(entry.amount) || 0);
-    }
-    return sum;
-  }, 0);
-}
-
-function normalizeFoodEntries(entries) {
-  if (!Array.isArray(entries)) return [];
-
-  return entries.map((entry) => {
-    const normalizedTimestamp =
-      typeof entry.timestamp === "number" && !isNaN(entry.timestamp)
-        ? entry.timestamp
-        : Date.now();
-
-    const normalizedText =
-      (entry.text || entry.type || "Other").toString().trim() || "Other";
-
-    return {
-      day: (entry.day || "").toString().trim().toUpperCase(),
-      text: normalizedText,
-      amount: parseFloat(entry.amount) || 0,
-      timestamp: normalizedTimestamp
-    };
-  });
-}
-
-function parseDayInfo(dayValue) {
-  const raw = String(dayValue || "").trim().toUpperCase();
-  const match = raw.match(/^([A-Z]+)(\d+)$/);
-
-  if (!match) {
-    return {
-      prefix: raw,
-      num: -1
-    };
-  }
-
-  return {
-    prefix: match[1],
-    num: parseInt(match[2], 10)
+  const appState = {
+    currency: "EUR",
+    numberOfDays: 40,
+    dayNumber: "D1",
+    foodBudget: 1500,
+    accommodationBudget: 900,
+    foodEntries: [],
+    accommodationEntries: []
   };
-}
 
-function compareEntries(a, b) {
-  const da = parseDayInfo(a.day);
-  const db = parseDayInfo(b.day);
+  const els = {
+    currencySelect: document.getElementById("currencySelect"),
+    daysInput: document.getElementById("daysInput"),
+    dayNumberInput: document.getElementById("dayNumberInput"),
+    prevDayBtn: document.getElementById("prevDayBtn"),
+    nextDayBtn: document.getElementById("nextDayBtn"),
 
-  if (da.prefix === db.prefix && da.num !== -1 && db.num !== -1) {
-    if (db.num !== da.num) {
-      return db.num - da.num;
-    }
-  } else {
-    const textCompare = String(b.day || "").localeCompare(String(a.day || ""));
-    if (textCompare !== 0) {
-      return textCompare;
-    }
+    foodHeading: document.getElementById("foodHeading"),
+    foodHeadingDate: document.getElementById("foodHeadingDate"),
+    foodBudgetInput: document.getElementById("foodBudgetInput"),
+    foodStartingDaily: document.getElementById("foodStartingDaily"),
+    foodRemainingBudget: document.getElementById("foodRemainingBudget"),
+    foodRemainingDaily: document.getElementById("foodRemainingDaily"),
+    foodSpentTodayLabel: document.getElementById("foodSpentTodayLabel"),
+    foodSpentToday: document.getElementById("foodSpentToday"),
+    foodEntryHeading: document.getElementById("foodEntryHeading"),
+    foodEditStatus: document.getElementById("foodEditStatus"),
+    foodTypeSelect: document.getElementById("foodTypeSelect"),
+    foodAmountInput: document.getElementById("foodAmountInput"),
+    foodNoteInput: document.getElementById("foodNoteInput"),
+    addFoodBtn: document.getElementById("addFoodBtn"),
+    cancelFoodEditBtn: document.getElementById("cancelFoodEditBtn"),
+    foodEntriesList: document.getElementById("foodEntriesList"),
+
+    accommodationHeading: document.getElementById("accommodationHeading"),
+    accommodationHeadingDate: document.getElementById("accommodationHeadingDate"),
+    accommodationBudgetInput: document.getElementById("accommodationBudgetInput"),
+    accommodationStartingDaily: document.getElementById("accommodationStartingDaily"),
+    accommodationRemainingBudget: document.getElementById("accommodationRemainingBudget"),
+    accommodationRemainingDaily: document.getElementById("accommodationRemainingDaily"),
+    accommodationSpentTodayLabel: document.getElementById("accommodationSpentTodayLabel"),
+    accommodationSpentToday: document.getElementById("accommodationSpentToday"),
+    accommodationEntryHeading: document.getElementById("accommodationEntryHeading"),
+    accommodationEditStatus: document.getElementById("accommodationEditStatus"),
+    accommodationTypeSelect: document.getElementById("accommodationTypeSelect"),
+    accommodationAmountInput: document.getElementById("accommodationAmountInput"),
+    accommodationNoteInput: document.getElementById("accommodationNoteInput"),
+    addAccommodationBtn: document.getElementById("addAccommodationBtn"),
+    cancelAccommodationEditBtn: document.getElementById("cancelAccommodationEditBtn"),
+    accommodationEntriesList: document.getElementById("accommodationEntriesList"),
+
+    modalOverlay: document.getElementById("appModalOverlay"),
+    modalTitle: document.getElementById("appModalTitle"),
+    modalBody: document.getElementById("appModalBody"),
+    modalOk: document.getElementById("appModalOk"),
+    modalCancel: document.getElementById("appModalCancel")
+  };
+
+  let modalResolver = null;
+  let currentEditFoodId = null;
+  let currentEditAccommodationId = null;
+
+  init();
+
+  function init() {
+    loadState();
+    bindEvents();
+    syncInputsFromState();
+    renderAll();
   }
 
-  return (b.timestamp || 0) - (a.timestamp || 0);
-}
-
-function normaliseDayNumberInput(value) {
-  const raw = String(value || "").trim().toUpperCase();
-
-  if (!raw) return "D1";
-
-  const match = raw.match(/^([A-Z]+)\s*(\d+)$/);
-  if (match) {
-    return match[1] + String(parseInt(match[2], 10));
-  }
-
-  return raw.replace(/\s+/g, "");
-}
-
-function changeDayNumber(step) {
-  syncInputsToState();
-
-  const info = parseDayInfo(state.dayNumber);
-
-  if (info.num === -1 || !info.prefix) {
-    state.dayNumber = "D1";
-  } else {
-    const nextNum = Math.max(1, info.num + step);
-    state.dayNumber = info.prefix + nextNum;
-  }
-
-  if (getEl("dayNumber")) {
-    getEl("dayNumber").value = state.dayNumber;
-  }
-
-  persistAll(false);
-  renderAll();
-}
-
-function setFoodAmount(value) {
-  const el = getEl("foodAmount");
-  if (!el) return;
-
-  const formatted = Number(value).toFixed(2);
-  el.value = formatted;
-  el.focus();
-
-  const dotIndex = formatted.indexOf(".");
-  if (dotIndex !== -1) {
-    const start = dotIndex + 1;
-    const end = formatted.length;
-
-    setTimeout(() => {
-      try {
-        el.setSelectionRange(start, end);
-      } catch (err) {
-        // Some browsers may not support selection on this input type.
-      }
-    }, 0);
-  } else {
-    el.select();
-  }
-}
-
-function clearFoodAmount() {
-  const el = getEl("foodAmount");
-  if (!el) return;
-
-  el.value = "";
-  el.focus();
-}
-
-function loadAll() {
-  try {
-    state.currency = localStorage.getItem("currency") || "€";
-    state.days = parseInt(localStorage.getItem("days"), 10) || 40;
-    state.dayNumber = normaliseDayNumberInput(localStorage.getItem("dayNumber") || "D1");
-    state.foodTotal = parseFloat(localStorage.getItem("foodTotal")) || 1500;
-    state.accomTotal = parseFloat(localStorage.getItem("accomTotal")) || 1500;
-    state.accomJournal = localStorage.getItem("accomJournal") || "";
-
-    const stored = localStorage.getItem("foodEntries");
-    state.foodEntries = stored ? normalizeFoodEntries(JSON.parse(stored)) : [];
-  } catch (err) {
-    console.error("loadAll error:", err);
-    state.foodEntries = [];
-  }
-}
-
-function syncStateToInputs() {
-  if (getEl("currency")) getEl("currency").value = state.currency;
-  if (getEl("days")) getEl("days").value = state.days;
-  if (getEl("dayNumber")) getEl("dayNumber").value = state.dayNumber;
-  if (getEl("foodTotal")) getEl("foodTotal").value = state.foodTotal;
-  if (getEl("accomTotal")) getEl("accomTotal").value = state.accomTotal;
-  if (getEl("accomJournal")) getEl("accomJournal").value = state.accomJournal;
-}
-
-function syncInputsToState() {
-  if (getEl("currency")) state.currency = getEl("currency").value || "€";
-  if (getEl("days")) state.days = parseInt(getEl("days").value, 10) || 1;
-  if (getEl("dayNumber")) state.dayNumber = normaliseDayNumberInput(getEl("dayNumber").value || "D1");
-  if (getEl("foodTotal")) state.foodTotal = parseFloat(getEl("foodTotal").value) || 0;
-  if (getEl("accomTotal")) state.accomTotal = parseFloat(getEl("accomTotal").value) || 0;
-  if (getEl("accomJournal")) state.accomJournal = getEl("accomJournal").value || "";
-}
-
-function persistAll(showAlert = false) {
-  syncInputsToState();
-
-  localStorage.setItem("currency", state.currency);
-  localStorage.setItem("days", String(state.days));
-  localStorage.setItem("dayNumber", state.dayNumber);
-  localStorage.setItem("foodTotal", String(state.foodTotal));
-  localStorage.setItem("accomTotal", String(state.accomTotal));
-  localStorage.setItem("foodEntries", JSON.stringify(state.foodEntries));
-  localStorage.setItem("accomJournal", state.accomJournal);
-
-  if (showAlert) {
-    alert("Saved.");
-  }
-}
-
-function renderFoodList() {
-  const list = getEl("foodList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  if (!state.foodEntries.length) {
-    list.innerHTML = "<div class='muted'>No food entries yet.</div>";
-    return;
-  }
-
-  [...state.foodEntries].sort(compareEntries).forEach(entry => {
-    const row = document.createElement("div");
-    row.className = "list-row";
-
-    const info = parseDayInfo(entry.day);
-    if (info.num !== -1) {
-      row.classList.add(info.num % 2 ? "day-odd" : "day-even");
-    }
-
-    const entryText = document.createElement("div");
-    entryText.className = "entry-text";
-
-    const main = document.createElement("span");
-    main.className = "entry-main";
-    main.textContent = `${entry.day} ${entry.text}`;
-
-    const amount = document.createElement("span");
-    amount.className = "entry-amount";
-    amount.textContent = formatMoney(entry.amount);
-
-    const date = document.createElement("span");
-    date.className = "entry-date";
-    date.textContent = formatEntryDate(entry.timestamp);
-
-    entryText.appendChild(main);
-    entryText.appendChild(amount);
-    entryText.appendChild(date);
-
-    const btnWrap = document.createElement("div");
-    btnWrap.className = "mini-buttons";
-
-    const index = state.foodEntries.indexOf(entry);
-
-    const edit = document.createElement("button");
-    edit.type = "button";
-    edit.textContent = "Edit";
-    edit.onclick = () => editFoodEntry(index);
-
-    const del = document.createElement("button");
-    del.type = "button";
-    del.textContent = "Delete";
-    del.onclick = () => deleteFoodEntry(index);
-
-    btnWrap.appendChild(edit);
-    btnWrap.appendChild(del);
-
-    row.appendChild(entryText);
-    row.appendChild(btnWrap);
-    list.appendChild(row);
-  });
-}
-
-function renderAll() {
-  syncInputsToState();
-
-  const foodHeading = getEl("foodHeading");
-  if (foodHeading) {
-    foodHeading.innerHTML = `Food <span class="add-day-subtitle">- for ${state.dayNumber}</span>`;
-  }
-
-  const addLabel = getEl("foodAddLabel");
-  if (addLabel) {
-    addLabel.innerHTML = `Add Food Entry <span class="add-day-subtitle">- for ${state.dayNumber}</span>`;
-  }
-
-  const days = state.days || 1;
-
-  const foodStartingDaily = state.foodTotal / days;
-  const totalFoodSpent = sumFoodEntries(state.foodEntries);
-  const foodRemaining = state.foodTotal - totalFoodSpent;
-  const todayFoodSpent = sumFoodEntriesForDay(state.foodEntries, state.dayNumber);
-  const foodRemainingDaily = foodStartingDaily - todayFoodSpent;
-
-  const accomStartingDaily = state.accomTotal / days;
-  const accomSpent = sumJournal(state.accomJournal);
-  const accomRemaining = state.accomTotal - accomSpent;
-  const accomRemainingDaily = accomStartingDaily - accomSpent;
-
-  if (getEl("foodStartingDaily")) {
-    getEl("foodStartingDaily").innerText =
-      "Starting Daily Food Budget:\n" + formatMoney(foodStartingDaily);
-  }
-
-  if (getEl("foodRemaining")) {
-    getEl("foodRemaining").innerText =
-      "Remaining Food Budget:\n" + formatMoney(foodRemaining);
-  }
-
-  if (getEl("foodRemainingDaily")) {
-    getEl("foodRemainingDaily").innerText =
-      "Remaining Daily Food Budget:\n" + formatMoney(foodRemainingDaily);
-  }
-
-  if (getEl("foodSpentToday")) {
-    getEl("foodSpentToday").innerText =
-      `Spent Today - ${state.dayNumber}:\n` + formatMoney(todayFoodSpent);
-  }
-
-  if (getEl("accomStartingDaily")) {
-    getEl("accomStartingDaily").innerText =
-      "Starting Daily Accommodation Budget:\n" + formatMoney(accomStartingDaily);
-  }
-
-  if (getEl("accomRemaining")) {
-    getEl("accomRemaining").innerText =
-      "Remaining Accommodation Budget:\n" + formatMoney(accomRemaining);
-  }
-
-  if (getEl("accomRemainingDaily")) {
-    getEl("accomRemainingDaily").innerText =
-      "Remaining Daily Accommodation Budget:\n" + formatMoney(accomRemainingDaily);
-  }
-
-  renderFoodList();
-}
-
-function addFoodEntry() {
-  syncInputsToState();
-
-  const typeEl = getEl("foodType");
-  const amountEl = getEl("foodAmount");
-
-  if (!typeEl || !amountEl) {
-    alert("Food entry controls were not found.");
-    return;
-  }
-
-  const type = typeEl.value;
-  const amount = parseFloat(amountEl.value);
-
-  if (isNaN(amount)) {
-    alert("Enter amount.");
-    return;
-  }
-
-  state.foodEntries.push({
-    day: state.dayNumber,
-    text: type,
-    amount: Math.max(0, amount),
-    timestamp: Date.now()
-  });
-
-  amountEl.value = "";
-  persistAll(false);
-  renderAll();
-  amountEl.focus();
-}
-
-function editFoodEntry(index) {
-  const entry = state.foodEntries[index];
-  if (!entry) return;
-
-  const typePrompt =
-    "Edit type by number:\n1. Breakfast\n2. Lunch\n3. Dinner\n4. Snack\n5. Drinks\n6. Other";
-
-  let currentTypeIndex = FOOD_TYPES.indexOf(entry.text);
-  if (currentTypeIndex < 0) currentTypeIndex = FOOD_TYPES.length - 1;
-
-  const typeChoice = prompt(typePrompt, String(currentTypeIndex + 1));
-  if (typeChoice === null) return;
-
-  const amountChoice = prompt("Amount:", String(entry.amount));
-  if (amountChoice === null) return;
-
-  const typeIndex = parseInt(typeChoice, 10);
-  const newAmount = parseFloat(amountChoice);
-
-  if (isNaN(typeIndex) || typeIndex < 1 || typeIndex > FOOD_TYPES.length) {
-    alert("Choose a number from 1 to 6.");
-    return;
-  }
-
-  if (isNaN(newAmount)) {
-    alert("Amount must be a number.");
-    return;
-  }
-
-  entry.text = FOOD_TYPES[typeIndex - 1];
-  entry.amount = Math.max(0, newAmount);
-
-  persistAll(false);
-  renderAll();
-}
-
-function deleteFoodEntry(index) {
-  const entry = state.foodEntries[index];
-  if (!entry) return;
-
-  const details = `${entry.day} ${entry.text} ${formatMoney(entry.amount)} ${formatDeleteDate(entry.timestamp)}`;
-  const confirmed = confirm(`Delete this food entry?\n\n${details}`);
-
-  if (!confirmed) return;
-
-  state.foodEntries.splice(index, 1);
-  persistAll(false);
-  renderAll();
-}
-
-function wireQuickAmountButtons() {
-  const buttons = document.querySelectorAll(".quick-amount-btn[data-amount]");
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const amount = parseFloat(btn.getAttribute("data-amount"));
-      if (!isNaN(amount)) {
-        setFoodAmount(amount);
+  function bindEvents() {
+    els.currencySelect.addEventListener("change", function () {
+      appState.currency = els.currencySelect.value;
+      formatAllCurrencyInputs();
+      saveState();
+      renderAll();
+    });
+
+    els.daysInput.addEventListener("change", function () {
+      const val = parseInt(els.daysInput.value, 10);
+      appState.numberOfDays = Number.isFinite(val) && val > 0 ? val : 1;
+      syncInputsFromState();
+      saveState();
+      renderAll();
+    });
+
+    els.dayNumberInput.addEventListener("change", function () {
+      appState.dayNumber = sanitizeDayNumber(els.dayNumberInput.value);
+      syncInputsFromState();
+      saveState();
+      renderAll();
+    });
+
+    els.prevDayBtn.addEventListener("click", function () {
+      appState.dayNumber = shiftDayNumber(appState.dayNumber, -1);
+      syncInputsFromState();
+      saveState();
+      renderAll();
+    });
+
+    els.nextDayBtn.addEventListener("click", function () {
+      appState.dayNumber = shiftDayNumber(appState.dayNumber, 1);
+      syncInputsFromState();
+      saveState();
+      renderAll();
+    });
+
+    bindCurrencyInput(els.foodBudgetInput, function (value) {
+      appState.foodBudget = value;
+      saveState();
+      renderAll();
+    });
+
+    bindCurrencyInput(els.accommodationBudgetInput, function (value) {
+      appState.accommodationBudget = value;
+      saveState();
+      renderAll();
+    });
+
+    bindCurrencyInput(els.foodAmountInput, function () {});
+    bindCurrencyInput(els.accommodationAmountInput, function () {});
+
+    els.addFoodBtn.addEventListener("click", onAddOrUpdateFood);
+    els.addAccommodationBtn.addEventListener("click", onAddOrUpdateAccommodation);
+
+    els.cancelFoodEditBtn.addEventListener("click", function () {
+      cancelFoodEdit(true);
+      renderAll();
+    });
+
+    els.cancelAccommodationEditBtn.addEventListener("click", function () {
+      cancelAccommodationEdit(true);
+      renderAll();
+    });
+
+    document.querySelectorAll(".quick-amount-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const targetId = btn.getAttribute("data-target");
+        const target = document.getElementById(targetId);
+        const valueToAdd = parseFloat(btn.getAttribute("data-value")) || 0;
+        const currentValue = parseCurrencyInputValue(target.value);
+        target.value = (currentValue + valueToAdd).toFixed(2);
+      });
+    });
+
+    document.querySelectorAll(".quick-clear-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const targetId = btn.getAttribute("data-target");
+        const target = document.getElementById(targetId);
+        target.value = "";
+      });
+    });
+
+    els.modalOk.addEventListener("click", function () {
+      closeModal(true);
+    });
+
+    els.modalCancel.addEventListener("click", function () {
+      closeModal(false);
+    });
+
+    els.modalOverlay.addEventListener("click", function (event) {
+      if (event.target === els.modalOverlay) {
+        closeModal(false);
       }
     });
-  });
 
-  const clearBtn = getEl("clearFoodAmountBtn");
-  if (clearBtn) {
-    clearBtn.addEventListener("click", clearFoodAmount);
-  }
-}
-
-function wireEvents() {
-  if (getEl("currency")) {
-    getEl("currency").addEventListener("change", () => {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("days")) {
-    getEl("days").addEventListener("input", () => {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("dayNumber")) {
-    getEl("dayNumber").addEventListener("input", () => {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("prevDayBtn")) {
-    getEl("prevDayBtn").addEventListener("click", () => changeDayNumber(-1));
-  }
-
-  if (getEl("nextDayBtn")) {
-    getEl("nextDayBtn").addEventListener("click", () => changeDayNumber(1));
-  }
-
-  if (getEl("foodTotal")) {
-    getEl("foodTotal").addEventListener("input", () => {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("accomTotal")) {
-    getEl("accomTotal").addEventListener("input", () => {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("accomJournal")) {
-    getEl("accomJournal").addEventListener("input", () => {
-      persistAll(false);
-      renderAll();
-    });
-  }
-
-  if (getEl("foodAmount")) {
-    getEl("foodAmount").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addFoodEntry();
+    document.addEventListener("keydown", function (event) {
+      if (!els.modalOverlay.classList.contains("hidden") && event.key === "Escape") {
+        closeModal(false);
       }
     });
   }
 
-  if (getEl("addFoodBtn")) {
-    getEl("addFoodBtn").addEventListener("click", addFoodEntry);
-  }
+  function bindCurrencyInput(inputEl, onValueCommit) {
+    inputEl.addEventListener("focus", function () {
+      const numericValue = parseCurrencyInputValue(inputEl.value);
+      inputEl.value = numericValue ? numericValue.toFixed(2).replace(/\.00$/, "") : "";
+    });
 
-  if (getEl("saveBtn")) {
-    getEl("saveBtn").addEventListener("click", () => persistAll(true));
-  }
-
-  if (getEl("exportJsonBtn")) {
-    getEl("exportJsonBtn").addEventListener("click", () => {
-      syncInputsToState();
-
-      const exportData = {
-        currency: state.currency,
-        days: state.days,
-        dayNumber: state.dayNumber,
-        foodTotal: state.foodTotal,
-        accomTotal: state.accomTotal,
-        foodEntries: state.foodEntries,
-        accomJournal: state.accomJournal
-      };
-
-      prompt("Copy JSON:", JSON.stringify(exportData));
+    inputEl.addEventListener("blur", function () {
+      const numericValue = sanitiseMoney(parseCurrencyInputValue(inputEl.value));
+      inputEl.value = numericValue === 0 && inputEl !== els.foodBudgetInput && inputEl !== els.accommodationBudgetInput
+        ? ""
+        : formatCurrency(numericValue);
+      onValueCommit(numericValue);
     });
   }
 
-  if (getEl("importJsonBtn")) {
-    getEl("importJsonBtn").addEventListener("click", () => {
-      const json = prompt("Paste JSON:");
-      if (!json) return;
+  function syncInputsFromState() {
+    els.currencySelect.value = appState.currency;
+    els.daysInput.value = appState.numberOfDays;
+    els.dayNumberInput.value = appState.dayNumber;
+    els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
+    els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
+  }
 
-      try {
-        const obj = JSON.parse(json);
+  function formatAllCurrencyInputs() {
+    if (document.activeElement !== els.foodBudgetInput) {
+      els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
+    }
+    if (document.activeElement !== els.accommodationBudgetInput) {
+      els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
+    }
 
-        state.currency = obj.currency === "$" ? "$" : "€";
-        state.days = parseInt(obj.days, 10) || 1;
-        state.dayNumber = normaliseDayNumberInput(obj.dayNumber || "D1");
-        state.foodTotal = parseFloat(obj.foodTotal) || 0;
-        state.accomTotal = parseFloat(obj.accomTotal) || 0;
-        state.accomJournal = String(obj.accomJournal || "");
-        state.foodEntries = normalizeFoodEntries(obj.foodEntries);
+    const foodAmountValue = parseCurrencyInputValue(els.foodAmountInput.value);
+    const accommodationAmountValue = parseCurrencyInputValue(els.accommodationAmountInput.value);
 
-        syncStateToInputs();
-        persistAll(false);
+    if (document.activeElement !== els.foodAmountInput) {
+      els.foodAmountInput.value = foodAmountValue ? formatCurrency(foodAmountValue) : "";
+    }
+    if (document.activeElement !== els.accommodationAmountInput) {
+      els.accommodationAmountInput.value = accommodationAmountValue ? formatCurrency(accommodationAmountValue) : "";
+    }
+  }
+
+  function renderAll() {
+    const dayLabel = appState.dayNumber;
+    const headingDate = formatDayNumberAsDate(appState.dayNumber);
+
+    els.foodHeading.querySelector(".section-main").textContent = "Food - for " + dayLabel;
+    els.foodHeadingDate.textContent = headingDate;
+    els.foodEntryHeading.innerHTML = (currentEditFoodId ? 'Edit Food Entry <span>- for ' : 'Add Food Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
+    els.foodSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
+
+    els.accommodationHeading.querySelector(".section-main").textContent = "Accommodation - for " + dayLabel;
+    els.accommodationHeadingDate.textContent = headingDate;
+    els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
+    els.accommodationSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
+
+    renderFoodSummary();
+    renderAccommodationSummary();
+    renderFoodEntries();
+    renderAccommodationEntries();
+    updateFormButtonStates();
+  }
+
+  function renderFoodSummary() {
+    const totalBudget = Number(appState.foodBudget) || 0;
+    const totalSpent = sumEntries(appState.foodEntries);
+    const spentToday = sumEntriesByDay(appState.foodEntries, appState.dayNumber);
+    const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const remainingBudget = totalBudget - totalSpent;
+    const remainingDaily = startingDaily - spentToday;
+
+    els.foodStartingDaily.textContent = formatCurrency(startingDaily);
+    els.foodRemainingBudget.textContent = formatCurrency(remainingBudget);
+    els.foodRemainingDaily.textContent = formatCurrency(remainingDaily);
+    els.foodSpentToday.textContent = formatCurrency(spentToday);
+  }
+
+  function renderAccommodationSummary() {
+    const totalBudget = Number(appState.accommodationBudget) || 0;
+    const totalSpent = sumEntries(appState.accommodationEntries);
+    const spentToday = sumEntriesByDay(appState.accommodationEntries, appState.dayNumber);
+    const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const remainingBudget = totalBudget - totalSpent;
+    const remainingDaily = startingDaily - spentToday;
+
+    els.accommodationStartingDaily.textContent = formatCurrency(startingDaily);
+    els.accommodationRemainingBudget.textContent = formatCurrency(remainingBudget);
+    els.accommodationRemainingDaily.textContent = formatCurrency(remainingDaily);
+    els.accommodationSpentToday.textContent = formatCurrency(spentToday);
+  }
+
+  function renderFoodEntries() {
+    els.foodEntriesList.innerHTML = "";
+
+    const sorted = getSortedEntries(appState.foodEntries);
+    if (!sorted.length) {
+      els.foodEntriesList.innerHTML = '<div class="empty-state">No food entries yet.</div>';
+      return;
+    }
+
+    const dayClassMap = buildDayAlternatingMap(sorted, "food");
+
+    sorted.forEach(function (entry) {
+      const item = document.createElement("div");
+      item.className = "entry-item " + dayClassMap[entry.dayKey];
+
+      const noteText = entry.note ? " • Note: " + escapeHtml(entry.note) : "";
+
+      item.innerHTML = [
+        '<div class="entry-top">',
+        '<div class="entry-main">',
+        '<div class="entry-line-1">' + escapeHtml(entry.type) + ' - ' + escapeHtml(entry.dayNumber) + '</div>',
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + '</div>',
+        '</div>',
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + '</div>',
+        '</div>',
+        '<div class="entry-actions">',
+        '<button type="button" class="small-action-btn edit-food-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
+        '<button type="button" class="small-action-btn delete-btn delete-food-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
+        '</div>'
+      ].join("");
+
+      els.foodEntriesList.appendChild(item);
+    });
+
+    els.foodEntriesList.querySelectorAll(".edit-food-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        startEditFood(btn.getAttribute("data-id"));
+      });
+    });
+
+    els.foodEntriesList.querySelectorAll(".delete-food-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        deleteFoodEntry(btn.getAttribute("data-id"));
+      });
+    });
+  }
+
+  function renderAccommodationEntries() {
+    els.accommodationEntriesList.innerHTML = "";
+
+    const sorted = getSortedEntries(appState.accommodationEntries);
+    if (!sorted.length) {
+      els.accommodationEntriesList.innerHTML = '<div class="empty-state">No accommodation entries yet.</div>';
+      return;
+    }
+
+    const dayClassMap = buildDayAlternatingMap(sorted, "acc");
+
+    sorted.forEach(function (entry) {
+      const item = document.createElement("div");
+      item.className = "entry-item " + dayClassMap[entry.dayKey];
+
+      const noteText = entry.note ? " • Note: " + escapeHtml(entry.note) : "";
+
+      item.innerHTML = [
+        '<div class="entry-top">',
+        '<div class="entry-main">',
+        '<div class="entry-line-1">' + escapeHtml(entry.type) + ' - ' + escapeHtml(entry.dayNumber) + '</div>',
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + '</div>',
+        '</div>',
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + '</div>',
+        '</div>',
+        '<div class="entry-actions">',
+        '<button type="button" class="small-action-btn edit-acc-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
+        '<button type="button" class="small-action-btn delete-btn delete-acc-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
+        '</div>'
+      ].join("");
+
+      els.accommodationEntriesList.appendChild(item);
+    });
+
+    els.accommodationEntriesList.querySelectorAll(".edit-acc-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        startEditAccommodation(btn.getAttribute("data-id"));
+      });
+    });
+
+    els.accommodationEntriesList.querySelectorAll(".delete-acc-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        deleteAccommodationEntry(btn.getAttribute("data-id"));
+      });
+    });
+  }
+
+  async function onAddOrUpdateFood() {
+    const type = els.foodTypeSelect.value;
+    const amount = sanitiseMoney(parseCurrencyInputValue(els.foodAmountInput.value));
+    const note = els.foodNoteInput.value.trim();
+
+    if (amount <= 0) {
+      await showInfo("Please enter a valid Food amount greater than 0.");
+      return;
+    }
+
+    if (currentEditFoodId) {
+      const entry = appState.foodEntries.find(function (item) {
+        return item.id === currentEditFoodId;
+      });
+
+      if (!entry) {
+        cancelFoodEdit();
         renderAll();
-        alert("Imported.");
-      } catch (err) {
-        alert("Invalid JSON");
+        await showInfo("That Food entry could not be found.");
+        return;
+      }
+
+      entry.type = type;
+      entry.amount = amount;
+      entry.note = note;
+      entry.dayNumber = appState.dayNumber;
+      entry.dayKey = buildDaySortKey(appState.dayNumber);
+
+      cancelFoodEdit(false);
+      clearFoodEntryInputs();
+      saveState();
+      renderAll();
+      await showInfo("Food entry updated.");
+      return;
+    }
+
+    appState.foodEntries.push({
+      id: createId(),
+      type: type,
+      amount: amount,
+      note: note,
+      dayNumber: appState.dayNumber,
+      dayKey: buildDaySortKey(appState.dayNumber),
+      createdAt: new Date().toISOString()
+    });
+
+    clearFoodEntryInputs();
+    saveState();
+    renderAll();
+  }
+
+  async function onAddOrUpdateAccommodation() {
+    const type = els.accommodationTypeSelect.value;
+    const amount = sanitiseMoney(parseCurrencyInputValue(els.accommodationAmountInput.value));
+    const note = els.accommodationNoteInput.value.trim();
+
+    if (amount <= 0) {
+      await showInfo("Please enter a valid Accommodation amount greater than 0.");
+      return;
+    }
+
+    if (currentEditAccommodationId) {
+      const entry = appState.accommodationEntries.find(function (item) {
+        return item.id === currentEditAccommodationId;
+      });
+
+      if (!entry) {
+        cancelAccommodationEdit();
+        renderAll();
+        await showInfo("That Accommodation entry could not be found.");
+        return;
+      }
+
+      entry.type = type;
+      entry.amount = amount;
+      entry.note = note;
+      entry.dayNumber = appState.dayNumber;
+      entry.dayKey = buildDaySortKey(appState.dayNumber);
+
+      cancelAccommodationEdit(false);
+      clearAccommodationEntryInputs();
+      saveState();
+      renderAll();
+      await showInfo("Accommodation entry updated.");
+      return;
+    }
+
+    const existingForDay = appState.accommodationEntries.find(function (item) {
+      return item.dayNumber === appState.dayNumber;
+    });
+
+    if (existingForDay) {
+      const confirmed = await showConfirm(
+        "There is already an Accommodation entry for " + appState.dayNumber + ".\n\n" +
+        "Existing entry:\n" +
+        "Type: " + existingForDay.type + "\n" +
+        "Amount: " + formatCurrency(existingForDay.amount) +
+        (existingForDay.note ? "\nNote: " + existingForDay.note : "") +
+        "\n\nReplace it?"
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      existingForDay.type = type;
+      existingForDay.amount = amount;
+      existingForDay.note = note;
+      existingForDay.dayKey = buildDaySortKey(appState.dayNumber);
+      existingForDay.createdAt = new Date().toISOString();
+
+      clearAccommodationEntryInputs();
+      saveState();
+      renderAll();
+      return;
+    }
+
+    appState.accommodationEntries.push({
+      id: createId(),
+      type: type,
+      amount: amount,
+      note: note,
+      dayNumber: appState.dayNumber,
+      dayKey: buildDaySortKey(appState.dayNumber),
+      createdAt: new Date().toISOString()
+    });
+
+    clearAccommodationEntryInputs();
+    saveState();
+    renderAll();
+  }
+
+  function startEditFood(id) {
+    const entry = appState.foodEntries.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!entry) {
+      showInfo("That Food entry could not be found.");
+      return;
+    }
+
+    cancelAccommodationEdit(false);
+    currentEditFoodId = id;
+    appState.dayNumber = entry.dayNumber;
+
+    syncInputsFromState();
+    renderAll();
+
+    setTimeout(function () {
+      els.foodTypeSelect.value = entry.type;
+      els.foodAmountInput.value = Number(entry.amount).toFixed(2);
+      els.foodNoteInput.value = entry.note || "";
+      updateFormButtonStates();
+    }, 0);
+  }
+
+  function startEditAccommodation(id) {
+    const entry = appState.accommodationEntries.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!entry) {
+      showInfo("That Accommodation entry could not be found.");
+      return;
+    }
+
+    cancelFoodEdit(false);
+    currentEditAccommodationId = id;
+    appState.dayNumber = entry.dayNumber;
+
+    syncInputsFromState();
+    renderAll();
+
+    setTimeout(function () {
+      els.accommodationTypeSelect.value = entry.type;
+      els.accommodationAmountInput.value = Number(entry.amount).toFixed(2);
+      els.accommodationNoteInput.value = entry.note || "";
+      updateFormButtonStates();
+    }, 0);
+  }
+
+  async function deleteFoodEntry(id) {
+    const entry = appState.foodEntries.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!entry) {
+      await showInfo("That Food entry could not be found.");
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      "Delete this Food entry?\n\n" +
+      "Day: " + entry.dayNumber + "\n" +
+      "Type: " + entry.type + "\n" +
+      "Amount: " + formatCurrency(entry.amount) + "\n" +
+      "Date: " + formatEntryDate(entry.createdAt) +
+      (entry.note ? "\nNote: " + entry.note : "")
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    appState.foodEntries = appState.foodEntries.filter(function (item) {
+      return item.id !== id;
+    });
+
+    if (currentEditFoodId === id) {
+      cancelFoodEdit(false);
+      clearFoodEntryInputs();
+    }
+
+    saveState();
+    renderAll();
+  }
+
+  async function deleteAccommodationEntry(id) {
+    const entry = appState.accommodationEntries.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!entry) {
+      await showInfo("That Accommodation entry could not be found.");
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      "Delete this Accommodation entry?\n\n" +
+      "Day: " + entry.dayNumber + "\n" +
+      "Type: " + entry.type + "\n" +
+      "Amount: " + formatCurrency(entry.amount) + "\n" +
+      "Date: " + formatEntryDate(entry.createdAt) +
+      (entry.note ? "\nNote: " + entry.note : "")
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    appState.accommodationEntries = appState.accommodationEntries.filter(function (item) {
+      return item.id !== id;
+    });
+
+    if (currentEditAccommodationId === id) {
+      cancelAccommodationEdit(false);
+      clearAccommodationEntryInputs();
+    }
+
+    saveState();
+    renderAll();
+  }
+
+  function clearFoodEntryInputs() {
+    els.foodTypeSelect.value = "Breakfast";
+    els.foodAmountInput.value = "";
+    els.foodNoteInput.value = "";
+  }
+
+  function clearAccommodationEntryInputs() {
+    els.accommodationTypeSelect.value = "Albergue";
+    els.accommodationAmountInput.value = "";
+    els.accommodationNoteInput.value = "";
+  }
+
+  function cancelFoodEdit(clearFields = true) {
+    currentEditFoodId = null;
+    if (clearFields) {
+      clearFoodEntryInputs();
+    }
+    updateFormButtonStates();
+  }
+
+  function cancelAccommodationEdit(clearFields = true) {
+    currentEditAccommodationId = null;
+    if (clearFields) {
+      clearAccommodationEntryInputs();
+    }
+    updateFormButtonStates();
+  }
+
+  function updateFormButtonStates() {
+    els.addFoodBtn.textContent = currentEditFoodId ? "Update Entry" : "Add Entry";
+    els.addAccommodationBtn.textContent = currentEditAccommodationId ? "Update Entry" : "Add Entry";
+
+    els.cancelFoodEditBtn.classList.toggle("hidden", !currentEditFoodId);
+    els.cancelAccommodationEditBtn.classList.toggle("hidden", !currentEditAccommodationId);
+
+    els.foodEditStatus.classList.toggle("hidden", !currentEditFoodId);
+    els.accommodationEditStatus.classList.toggle("hidden", !currentEditAccommodationId);
+
+    els.foodTypeSelect.classList.toggle("editing-active", Boolean(currentEditFoodId));
+    els.foodAmountInput.classList.toggle("editing-active", Boolean(currentEditFoodId));
+    els.foodNoteInput.classList.toggle("editing-active", Boolean(currentEditFoodId));
+
+    els.accommodationTypeSelect.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
+    els.accommodationAmountInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
+    els.accommodationNoteInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
+  }
+
+  function getSortedEntries(entries) {
+    return entries.slice().sort(function (a, b) {
+      if (b.dayKey !== a.dayKey) {
+        return b.dayKey - a.dayKey;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }
+
+  function buildDayAlternatingMap(sortedEntries, type) {
+    const result = {};
+    let toggle = false;
+    let lastDayKey = null;
+
+    sortedEntries.forEach(function (entry) {
+      if (entry.dayKey !== lastDayKey) {
+        toggle = !toggle;
+        lastDayKey = entry.dayKey;
+      }
+
+      if (type === "food") {
+        result[entry.dayKey] = toggle ? "food-day-a" : "food-day-b";
+      } else {
+        result[entry.dayKey] = toggle ? "acc-day-a" : "acc-day-b";
       }
     });
+
+    return result;
   }
 
-  if (getEl("resetBtn")) {
-    getEl("resetBtn").addEventListener("click", () => {
-      if (!confirm("This will clear all data. Continue?")) return;
-
-      localStorage.removeItem("currency");
-      localStorage.removeItem("days");
-      localStorage.removeItem("dayNumber");
-      localStorage.removeItem("foodTotal");
-      localStorage.removeItem("accomTotal");
-      localStorage.removeItem("foodEntries");
-      localStorage.removeItem("accomJournal");
-      location.reload();
-    });
+  function sumEntries(entries) {
+    return entries.reduce(function (sum, entry) {
+      return sum + (Number(entry.amount) || 0);
+    }, 0);
   }
 
-  wireQuickAmountButtons();
-}
+  function sumEntriesByDay(entries, dayNumber) {
+    return entries.reduce(function (sum, entry) {
+      return entry.dayNumber === dayNumber ? sum + (Number(entry.amount) || 0) : sum;
+    }, 0);
+  }
 
-function setFooterTimestamp() {
-  const el = getEl("ts");
-  if (!el) return;
+  function sanitiseMoney(value) {
+    const num = parseFloat(value);
+    if (!Number.isFinite(num) || num < 0) {
+      return 0;
+    }
+    return Math.round(num * 100) / 100;
+  }
 
-  try {
-    const d = new Date();
-    const opts = {
+  function parseCurrencyInputValue(value) {
+    const cleaned = String(value || "").replace(/[^0-9.\-]/g, "");
+    const num = parseFloat(cleaned);
+    return Number.isFinite(num) ? num : 0;
+  }
+
+  function sanitizeDayNumber(value) {
+    const raw = String(value || "").trim().toUpperCase();
+    const match = raw.match(/^([SDF])\s*(\d{1,3})$/);
+
+    if (!match) {
+      return "D1";
+    }
+
+    const prefix = match[1];
+    const num = Math.max(1, parseInt(match[2], 10) || 1);
+    return prefix + num;
+  }
+
+  function shiftDayNumber(current, delta) {
+    const match = String(current || "D1").trim().toUpperCase().match(/^([SDF])(\d{1,3})$/);
+
+    if (!match) {
+      return "D1";
+    }
+
+    const prefix = match[1];
+    let num = parseInt(match[2], 10) || 1;
+    num += delta;
+
+    if (num < 1) {
+      num = 1;
+    }
+
+    return prefix + num;
+  }
+
+  function buildDaySortKey(dayNumber) {
+    const clean = sanitizeDayNumber(dayNumber);
+    const match = clean.match(/^([SDF])(\d{1,3})$/);
+
+    if (!match) {
+      return 2001;
+    }
+
+    const prefix = match[1];
+    const num = parseInt(match[2], 10) || 1;
+    const prefixBase = { S: 1000, D: 2000, F: 3000 };
+
+    return prefixBase[prefix] + num;
+  }
+
+  function formatDayNumberAsDate(dayNumber) {
+    const clean = sanitizeDayNumber(dayNumber);
+    const match = clean.match(/^([SDF])(\d{1,3})$/);
+
+    if (!match) {
+      return "";
+    }
+
+    const prefix = match[1];
+    const num = parseInt(match[2], 10) || 1;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let offsetDays = 0;
+
+    if (prefix === "D") {
+      offsetDays = num - 1;
+    } else if (prefix === "S") {
+      offsetDays = -num;
+    } else if (prefix === "F") {
+      offsetDays = appState.numberOfDays + (num - 1);
+    }
+
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + offsetDays);
+
+    return targetDate.toLocaleDateString("en-CA", {
       month: "short",
       day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    };
-    el.textContent = new Intl.DateTimeFormat("en-CA", opts).format(d);
-  } catch (err) {
-    el.textContent = new Date().toLocaleString();
+      year: "numeric"
+    });
   }
-}
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadAll();
-  syncStateToInputs();
-  wireEvents();
-  setFooterTimestamp();
-  renderAll();
-});
+  function formatCurrency(amount) {
+    const num = Number(amount) || 0;
+
+    if (appState.currency === "EUR") {
+      return "€" + num.toFixed(2);
+    }
+
+    if (appState.currency === "CAD") {
+      return "$" + num.toFixed(2);
+    }
+
+    return "US$" + num.toFixed(2);
+  }
+
+  function formatEntryDate(isoString) {
+    const date = new Date(isoString);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleDateString("en-CA", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  }
+
+  function createId() {
+    return "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+
+      appState.currency = parsed.currency || appState.currency;
+      appState.numberOfDays = Number.isFinite(parsed.numberOfDays) ? parsed.numberOfDays : appState.numberOfDays;
+      appState.dayNumber = parsed.dayNumber || appState.dayNumber;
+      appState.foodBudget = Number.isFinite(parsed.foodBudget) ? parsed.foodBudget : appState.foodBudget;
+      appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
+      appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
+      appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
+    } catch (error) {
+      console.error("Could not load saved app data.", error);
+    }
+  }
+
+  function showInfo(message) {
+    return showModal({
+      title: "Trip Budget Tracker",
+      body: message,
+      showCancel: false,
+      okText: "OK"
+    });
+  }
+
+  function showConfirm(message) {
+    return showModal({
+      title: "Trip Budget Tracker",
+      body: message,
+      showCancel: true,
+      okText: "OK",
+      cancelText: "Cancel"
+    });
+  }
+
+  function showModal(config) {
+    els.modalTitle.textContent = config.title || "Trip Budget Tracker";
+    els.modalBody.textContent = config.body || "";
+    els.modalOk.textContent = config.okText || "OK";
+    els.modalCancel.textContent = config.cancelText || "Cancel";
+
+    if (config.showCancel) {
+      els.modalCancel.classList.remove("hidden");
+    } else {
+      els.modalCancel.classList.add("hidden");
+    }
+
+    els.modalOverlay.classList.remove("hidden");
+    els.modalOverlay.setAttribute("aria-hidden", "false");
+
+    return new Promise(function (resolve) {
+      modalResolver = resolve;
+      setTimeout(function () {
+        els.modalOk.focus();
+      }, 10);
+    });
+  }
+
+  function closeModal(result) {
+    if (els.modalOverlay.classList.contains("hidden")) {
+      return;
+    }
+
+    els.modalOverlay.classList.add("hidden");
+    els.modalOverlay.setAttribute("aria-hidden", "true");
+
+    if (typeof modalResolver === "function") {
+      const resolver = modalResolver;
+      modalResolver = null;
+      resolver(Boolean(result));
+    }
+  }
+})();
