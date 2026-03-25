@@ -1,4 +1,4 @@
-// Version #31 Mar 24, 2026 1:05 PM
+// Version #32 Mar 24, 2026 1:35 PM
 
 (function () {
   "use strict";
@@ -22,7 +22,7 @@
     prevDayBtn: document.getElementById("prevDayBtn"),
     nextDayBtn: document.getElementById("nextDayBtn"),
 
-    foodHeadingMain: document.getElementById("foodHeadingMain"),
+    foodHeadingText: document.getElementById("foodHeadingText"),
     foodHeadingDate: document.getElementById("foodHeadingDate"),
     foodBudgetInput: document.getElementById("foodBudgetInput"),
     foodStartingDaily: document.getElementById("foodStartingDaily"),
@@ -39,7 +39,7 @@
     cancelFoodEditBtn: document.getElementById("cancelFoodEditBtn"),
     foodEntriesList: document.getElementById("foodEntriesList"),
 
-    accommodationHeadingMain: document.getElementById("accommodationHeadingMain"),
+    accommodationHeadingText: document.getElementById("accommodationHeadingText"),
     accommodationHeadingDate: document.getElementById("accommodationHeadingDate"),
     accommodationBudgetInput: document.getElementById("accommodationBudgetInput"),
     accommodationStartingDaily: document.getElementById("accommodationStartingDaily"),
@@ -79,7 +79,8 @@
   function bindEvents() {
     els.currencySelect.addEventListener("change", function () {
       appState.currency = els.currencySelect.value;
-      formatAllCurrencyInputs();
+      syncInputsFromState();
+      formatAmountInputsIfNeeded();
       saveState();
       renderAll();
     });
@@ -113,20 +114,20 @@
       renderAll();
     });
 
-    bindCurrencyInput(els.foodBudgetInput, function (value) {
+    bindBudgetCurrencyInput(els.foodBudgetInput, function (value) {
       appState.foodBudget = value;
       saveState();
       renderAll();
     });
 
-    bindCurrencyInput(els.accommodationBudgetInput, function (value) {
+    bindBudgetCurrencyInput(els.accommodationBudgetInput, function (value) {
       appState.accommodationBudget = value;
       saveState();
       renderAll();
     });
 
-    bindCurrencyInput(els.foodAmountInput, function () {});
-    bindCurrencyInput(els.accommodationAmountInput, function () {});
+    bindAmountCurrencyInput(els.foodAmountInput);
+    bindAmountCurrencyInput(els.accommodationAmountInput);
 
     els.addFoodBtn.addEventListener("click", onAddOrUpdateFood);
     els.addAccommodationBtn.addEventListener("click", onAddOrUpdateAccommodation);
@@ -180,18 +181,28 @@
     });
   }
 
-  function bindCurrencyInput(inputEl, onValueCommit) {
+  function bindBudgetCurrencyInput(inputEl, onCommit) {
     inputEl.addEventListener("focus", function () {
-      const numericValue = parseCurrencyInputValue(inputEl.value);
-      inputEl.value = numericValue ? numericValue.toFixed(2).replace(/\.00$/, "") : "";
+      const num = parseCurrencyInputValue(inputEl.value);
+      inputEl.value = num ? num.toFixed(2).replace(/\.00$/, "") : "";
     });
 
     inputEl.addEventListener("blur", function () {
-      const numericValue = sanitiseMoney(parseCurrencyInputValue(inputEl.value));
-      inputEl.value = numericValue === 0 && inputEl !== els.foodBudgetInput && inputEl !== els.accommodationBudgetInput
-        ? ""
-        : formatCurrency(numericValue);
-      onValueCommit(numericValue);
+      const num = sanitiseMoney(parseCurrencyInputValue(inputEl.value));
+      inputEl.value = formatCurrency(num);
+      onCommit(num);
+    });
+  }
+
+  function bindAmountCurrencyInput(inputEl) {
+    inputEl.addEventListener("focus", function () {
+      const num = parseCurrencyInputValue(inputEl.value);
+      inputEl.value = num ? num.toFixed(2).replace(/\.00$/, "") : "";
+    });
+
+    inputEl.addEventListener("blur", function () {
+      const num = sanitiseMoney(parseCurrencyInputValue(inputEl.value));
+      inputEl.value = num ? formatCurrency(num) : "";
     });
   }
 
@@ -203,22 +214,15 @@
     els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
   }
 
-  function formatAllCurrencyInputs() {
-    if (document.activeElement !== els.foodBudgetInput) {
-      els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
-    }
-    if (document.activeElement !== els.accommodationBudgetInput) {
-      els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
-    }
-
-    const foodAmountValue = parseCurrencyInputValue(els.foodAmountInput.value);
-    const accommodationAmountValue = parseCurrencyInputValue(els.accommodationAmountInput.value);
-
+  function formatAmountInputsIfNeeded() {
     if (document.activeElement !== els.foodAmountInput) {
-      els.foodAmountInput.value = foodAmountValue ? formatCurrency(foodAmountValue) : "";
+      const foodNum = parseCurrencyInputValue(els.foodAmountInput.value);
+      els.foodAmountInput.value = foodNum ? formatCurrency(foodNum) : "";
     }
+
     if (document.activeElement !== els.accommodationAmountInput) {
-      els.accommodationAmountInput.value = accommodationAmountValue ? formatCurrency(accommodationAmountValue) : "";
+      const accNum = parseCurrencyInputValue(els.accommodationAmountInput.value);
+      els.accommodationAmountInput.value = accNum ? formatCurrency(accNum) : "";
     }
   }
 
@@ -226,12 +230,12 @@
     const dayLabel = appState.dayNumber;
     const headingDate = formatDayNumberAsDate(appState.dayNumber);
 
-    els.foodHeadingMain.textContent = "Food - for " + dayLabel;
+    els.foodHeadingText.textContent = "Food - for " + dayLabel;
     els.foodHeadingDate.textContent = headingDate;
     els.foodEntryHeading.innerHTML = (currentEditFoodId ? 'Edit Food Entry <span>- for ' : 'Add Food Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
     els.foodSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
 
-    els.accommodationHeadingMain.textContent = "Accommodation - for " + dayLabel;
+    els.accommodationHeadingText.textContent = "Accommodation - for " + dayLabel;
     els.accommodationHeadingDate.textContent = headingDate;
     els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
     els.accommodationSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
@@ -795,11 +799,7 @@
     const targetDate = new Date(today);
     targetDate.setDate(today.getDate() + offsetDays);
 
-    return targetDate.toLocaleDateString("en-CA", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
+    return formatDateObject(targetDate);
   }
 
   function formatCurrency(amount) {
@@ -823,11 +823,12 @@
       return "";
     }
 
-    return date.toLocaleDateString("en-CA", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
+    return formatDateObject(date);
+  }
+
+  function formatDateObject(date) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return months[date.getMonth()] + " " + date.getDate() + ", " + date.getFullYear();
   }
 
   function createId() {
