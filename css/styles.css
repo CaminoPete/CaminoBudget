@@ -1,4 +1,4 @@
-/* Version #31 Mar 24, 2026 1:05 PM */
+/* Version #32 Mar 24, 2026 1:35 PM */
 
 :root {
   --bg: #efefef;
@@ -35,6 +35,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   background: var(--bg);
   color: var(--text);
+  overflow-x: hidden;
 }
 
 body {
