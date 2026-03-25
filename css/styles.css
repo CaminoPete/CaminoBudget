@@ -1,4 +1,4 @@
-/* Version #33 Mar 24, 2026 2:05 PM */
+/* Version #35 Mar 24, 2026 2:45 PM */
 
 :root {
   --bg: #efefef;
@@ -35,10 +35,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   background: var(--bg);
   color: var(--text);
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
-  min-height: 100vh;
+  position: static;
 }
 
 .app-shell {
@@ -405,7 +408,6 @@ select {
   display: none !important;
 }
 
-/* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -415,6 +417,10 @@ select {
   justify-content: center;
   padding: 14px;
   z-index: 9999;
+}
+
+.modal-overlay.hidden {
+  display: none !important;
 }
 
 .modal-box {
