@@ -1,4 +1,4 @@
-// Version #30 Mar 24, 2026 12:30 PM
+// Version #31 Mar 24, 2026 1:05 PM
 
 (function () {
   "use strict";
@@ -22,7 +22,7 @@
     prevDayBtn: document.getElementById("prevDayBtn"),
     nextDayBtn: document.getElementById("nextDayBtn"),
 
-    foodHeading: document.getElementById("foodHeading"),
+    foodHeadingMain: document.getElementById("foodHeadingMain"),
     foodHeadingDate: document.getElementById("foodHeadingDate"),
     foodBudgetInput: document.getElementById("foodBudgetInput"),
     foodStartingDaily: document.getElementById("foodStartingDaily"),
@@ -39,7 +39,7 @@
     cancelFoodEditBtn: document.getElementById("cancelFoodEditBtn"),
     foodEntriesList: document.getElementById("foodEntriesList"),
 
-    accommodationHeading: document.getElementById("accommodationHeading"),
+    accommodationHeadingMain: document.getElementById("accommodationHeadingMain"),
     accommodationHeadingDate: document.getElementById("accommodationHeadingDate"),
     accommodationBudgetInput: document.getElementById("accommodationBudgetInput"),
     accommodationStartingDaily: document.getElementById("accommodationStartingDaily"),
@@ -226,12 +226,12 @@
     const dayLabel = appState.dayNumber;
     const headingDate = formatDayNumberAsDate(appState.dayNumber);
 
-    els.foodHeading.querySelector(".section-main").textContent = "Food - for " + dayLabel;
+    els.foodHeadingMain.textContent = "Food - for " + dayLabel;
     els.foodHeadingDate.textContent = headingDate;
     els.foodEntryHeading.innerHTML = (currentEditFoodId ? 'Edit Food Entry <span>- for ' : 'Add Food Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
     els.foodSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
 
-    els.accommodationHeading.querySelector(".section-main").textContent = "Accommodation - for " + dayLabel;
+    els.accommodationHeadingMain.textContent = "Accommodation - for " + dayLabel;
     els.accommodationHeadingDate.textContent = headingDate;
     els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
     els.accommodationSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
