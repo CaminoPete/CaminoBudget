@@ -1,4 +1,4 @@
-// Version #33 Mar 24, 2026 2:05 PM
+// Version #35 Mar 24, 2026 2:45 PM
 
 (function () {
   "use strict";
@@ -272,7 +272,8 @@
 
     const dayClassMap = buildDayAlternatingMap(sorted, "food");
 
-    sorted.forEach(function (entry) {
+    for (let i = 0; i < sorted.length; i++) {
+      const entry = sorted[i];
       const item = document.createElement("div");
       item.className = "entry-item " + dayClassMap[entry.dayKey];
 
@@ -292,7 +293,7 @@
         '</div>';
 
       els.foodEntriesList.appendChild(item);
-    });
+    }
 
     els.foodEntriesList.querySelectorAll(".edit-food-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -318,7 +319,8 @@
 
     const dayClassMap = buildDayAlternatingMap(sorted, "acc");
 
-    sorted.forEach(function (entry) {
+    for (let i = 0; i < sorted.length; i++) {
+      const entry = sorted[i];
       const item = document.createElement("div");
       item.className = "entry-item " + dayClassMap[entry.dayKey];
 
@@ -338,7 +340,7 @@
         '</div>';
 
       els.accommodationEntriesList.appendChild(item);
-    });
+    }
 
     els.accommodationEntriesList.querySelectorAll(".edit-acc-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
