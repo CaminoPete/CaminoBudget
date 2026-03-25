@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #32 Mar 24, 2026 1:35 PM -->
+  <!-- Version #33 Mar 24, 2026 2:05 PM -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip Budget Tracker</title>
@@ -11,13 +11,13 @@
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v32</div>
+      <div class="version-tag">v33</div>
     </header>
 
     <main class="app-main">
       <section class="settings-panel">
         <div class="settings-grid">
-          <div class="field-block currency-block">
+          <div class="field-block">
             <label for="currencySelect">Currency:</label>
             <select id="currencySelect">
               <option value="EUR">Euros (€)</option>
@@ -26,12 +26,12 @@
             </select>
           </div>
 
-          <div class="field-block days-block">
+          <div class="field-block">
             <label for="daysInput">Number of Days:</label>
             <input id="daysInput" type="number" min="1" step="1" value="40" />
           </div>
 
-          <div class="field-block day-number-block">
+          <div class="field-block">
             <label for="dayNumberInput">Day Number</label>
             <div class="day-stepper-row">
               <button type="button" id="prevDayBtn" class="arrow-btn" aria-label="Previous Day">◀</button>
