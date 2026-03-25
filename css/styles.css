@@ -1,4 +1,4 @@
-/* Version #30 Mar 24, 2026 12:30 PM */
+/* Version #31 Mar 24, 2026 1:05 PM */
 
 :root {
   --bg: #efefef;
@@ -178,9 +178,7 @@ select {
 
 .section-title {
   margin: 2px 0 10px;
-  color: var(--blue);
   font-size: 1.15rem;
-  font-weight: 800;
   line-height: 1.2;
   display: flex;
   flex-wrap: wrap;
