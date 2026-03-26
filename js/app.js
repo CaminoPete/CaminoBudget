@@ -1,13 +1,14 @@
 /*
-Version 1 Rollback Baseline
 Trip Budget Tracker
-Mar 26, 2026
+Version: v12
+Date: Mar 26, 2026
+File: js/app.js
 */
 
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "tripBudgetTrackerRollbackV1";
+  const STORAGE_KEY = "tripBudgetTracker_v12";
 
   const state = {
     currency: "EUR",
@@ -151,13 +152,14 @@ Mar 26, 2026
 
   function updateTitles() {
     const day = state.dayNumber;
-    els.foodSectionTitle.textContent = "Food — for " + day;
-    els.foodEntryTitle.textContent = "Add Food Entry — for " + day;
-    els.foodSpentTodayLabel.textContent = "Spent Today — " + day;
 
-    els.accommodationSectionTitle.textContent = "Accommodation — for " + day;
-    els.accommodationEntryTitle.textContent = "Add Accommodation Entry — for " + day;
-    els.accSpentTodayLabel.textContent = "Spent Today — " + day;
+    els.foodSectionTitle.textContent = "Food - for " + day;
+    els.foodEntryTitle.textContent = "Add Food Entry - for " + day;
+    els.foodSpentTodayLabel.textContent = "Spent Today - " + day;
+
+    els.accommodationSectionTitle.textContent = "Accommodation - for " + day;
+    els.accommodationEntryTitle.textContent = "Add Accommodation Entry - for " + day;
+    els.accSpentTodayLabel.textContent = "Spent Today - " + day;
   }
 
   function renderSummaries() {
@@ -301,9 +303,9 @@ Mar 26, 2026
       return;
     }
 
-    list.forEach(function (entry, index) {
+    list.forEach(function (entry) {
       const card = document.createElement("div");
-      card.className = "entry-card " + getFoodDayClass(entry.dayNumber, list, index);
+      card.className = "entry-card " + getAlternatingDayClass(entry.dayNumber, list, "food");
 
       const topRow = document.createElement("div");
       topRow.className = "entry-top-row";
@@ -313,14 +315,14 @@ Mar 26, 2026
 
       const title = document.createElement("div");
       title.className = "entry-title";
-      title.textContent = entry.type + " — " + formatCurrency(entry.amount);
+      title.textContent = entry.type + " - " + formatCurrency(entry.amount);
 
-      const meta1 = document.createElement("div");
-      meta1.className = "entry-meta";
-      meta1.textContent = entry.dayNumber + " • " + entry.dateStamp;
+      const meta = document.createElement("div");
+      meta.className = "entry-meta";
+      meta.textContent = entry.dayNumber + " • " + entry.dateStamp;
 
       main.appendChild(title);
-      main.appendChild(meta1);
+      main.appendChild(meta);
 
       if (entry.note) {
         const note = document.createElement("div");
@@ -368,9 +370,9 @@ Mar 26, 2026
       return;
     }
 
-    list.forEach(function (entry, index) {
+    list.forEach(function (entry) {
       const card = document.createElement("div");
-      card.className = "entry-card " + getAccommodationDayClass(entry.dayNumber, list, index);
+      card.className = "entry-card " + getAlternatingDayClass(entry.dayNumber, list, "acc");
 
       const topRow = document.createElement("div");
       topRow.className = "entry-top-row";
@@ -380,14 +382,14 @@ Mar 26, 2026
 
       const title = document.createElement("div");
       title.className = "entry-title";
-      title.textContent = entry.type + " — " + formatCurrency(entry.amount);
+      title.textContent = entry.type + " - " + formatCurrency(entry.amount);
 
-      const meta1 = document.createElement("div");
-      meta1.className = "entry-meta";
-      meta1.textContent = entry.dayNumber + " • " + entry.dateStamp;
+      const meta = document.createElement("div");
+      meta.className = "entry-meta";
+      meta.textContent = entry.dayNumber + " • " + entry.dateStamp;
 
       main.appendChild(title);
-      main.appendChild(meta1);
+      main.appendChild(meta);
 
       if (entry.note) {
         const note = document.createElement("div");
@@ -447,7 +449,6 @@ Mar 26, 2026
 
     saveState();
     renderAll();
-    scrollToTopSafe();
   }
 
   function startAccommodationEdit(id) {
@@ -471,7 +472,6 @@ Mar 26, 2026
 
     saveState();
     renderAll();
-    scrollToTopSafe();
   }
 
   function deleteFoodEntry(id) {
@@ -564,6 +564,7 @@ Mar 26, 2026
     if (!match) {
       return { prefix: "D", number: 1 };
     }
+
     return {
       prefix: match[1],
       number: parseInt(match[2], 10)
@@ -582,9 +583,10 @@ Mar 26, 2026
     if (!match) {
       return "D1";
     }
+
     const prefix = match[1];
-    const num = Math.max(1, parseInt(match[2], 10));
-    return prefix + num;
+    const number = Math.max(1, parseInt(match[2], 10));
+    return prefix + number;
   }
 
   function sanitizeMoney(value) {
@@ -603,9 +605,11 @@ Mar 26, 2026
     if (state.currency === "EUR") {
       return sign + "€" + abs;
     }
+
     if (state.currency === "USD") {
       return sign + "US$" + abs;
     }
+
     return sign + "$" + abs;
   }
 
@@ -634,47 +638,35 @@ Mar 26, 2026
     });
   }
 
-  function getFoodDayClass(dayNumber, list, index) {
-    const uniqueOrder = getUniqueDayOrder(list);
-    const dayIndex = uniqueOrder.indexOf(sanitizeDayNumber(dayNumber));
-    return dayIndex % 2 === 0 ? "food-day-a" : "food-day-b";
-  }
-
-  function getAccommodationDayClass(dayNumber, list, index) {
-    const uniqueOrder = getUniqueDayOrder(list);
-    const dayIndex = uniqueOrder.indexOf(sanitizeDayNumber(dayNumber));
-    return dayIndex % 2 === 0 ? "acc-day-a" : "acc-day-b";
-  }
-
-  function getUniqueDayOrder(list) {
-    const seen = [];
+  function getAlternatingDayClass(dayNumber, list, type) {
+    const days = [];
     list.forEach(function (entry) {
       const day = sanitizeDayNumber(entry.dayNumber);
-      if (seen.indexOf(day) === -1) {
-        seen.push(day);
+      if (days.indexOf(day) === -1) {
+        days.push(day);
       }
     });
-    return seen;
-  }
 
-  function scrollToTopSafe() {
-    try {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      window.scrollTo(0, 0);
+    const index = days.indexOf(sanitizeDayNumber(dayNumber));
+    if (type === "food") {
+      return index % 2 === 0 ? "food-day-a" : "food-day-b";
     }
+    return index % 2 === 0 ? "acc-day-a" : "acc-day-b";
   }
 
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      currency: state.currency,
-      numDays: state.numDays,
-      dayNumber: state.dayNumber,
-      foodBudget: state.foodBudget,
-      accommodationBudget: state.accommodationBudget,
-      foodEntries: state.foodEntries,
-      accommodationEntries: state.accommodationEntries
-    }));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        currency: state.currency,
+        numDays: state.numDays,
+        dayNumber: state.dayNumber,
+        foodBudget: state.foodBudget,
+        accommodationBudget: state.accommodationBudget,
+        foodEntries: state.foodEntries,
+        accommodationEntries: state.accommodationEntries
+      })
+    );
   }
 
   function loadState() {
@@ -694,7 +686,7 @@ Mar 26, 2026
       state.foodEntries = Array.isArray(saved.foodEntries) ? saved.foodEntries : [];
       state.accommodationEntries = Array.isArray(saved.accommodationEntries) ? saved.accommodationEntries : [];
     } catch (error) {
-      console.warn("Could not load saved Trip Budget Tracker data.", error);
+      console.warn("Could not load saved data.", error);
     }
   }
 
