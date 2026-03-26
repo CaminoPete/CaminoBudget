@@ -1,62 +1,59 @@
 /*
-Version 1 Rollback Baseline
 Trip Budget Tracker
-Mar 26, 2026
+Version: v12
+Date: Mar 26, 2026
+File: css/styles.css
 */
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  height: auto;
-  min-height: 100%;
-}
-
+html,
 body {
   margin: 0;
   padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f4f6f8;
-  color: #222;
-  line-height: 1.35;
-  min-height: 100%;
-  overflow-x: hidden;
 }
 
-.app-shell {
-  width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 12px;
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f5f7;
+  color: #222;
+  line-height: 1.35;
 }
 
 .app-header {
-  margin-bottom: 14px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 12px 12px 6px 12px;
 }
 
 .app-header h1 {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 1.7rem;
 }
 
-.app-subtitle {
-  margin: 0;
-  font-size: 0.95rem;
+.version-text {
+  margin-top: 4px;
+  font-size: 0.92rem;
   color: #555;
+  font-weight: 600;
 }
 
-.app-main {
-  display: block;
+.page-wrap {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 12px 16px 12px;
 }
 
 .panel {
-  background: #ffffff;
-  border: 1px solid #d9dee5;
+  background: #fff;
+  border: 1px solid #d8dee5;
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .section-title {
@@ -108,32 +105,30 @@ button {
 input,
 select {
   width: 100%;
+  padding: 9px 10px;
   min-height: 42px;
   border: 1px solid #c6ccd4;
   border-radius: 8px;
-  padding: 9px 10px;
   background: #fff;
   color: #222;
 }
 
-input:focus,
-select:focus,
-button:focus {
-  outline: 2px solid #7aa7ff;
-  outline-offset: 1px;
+button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .top-settings .small-field input {
   max-width: 140px;
 }
 
-.day-nav-field .day-nav-row {
+.day-nav-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.day-nav-field input {
+.day-nav-row input {
   max-width: 90px;
   text-align: center;
   font-weight: 700;
@@ -145,6 +140,7 @@ button:focus {
   border: 1px solid #bcc5d0;
   border-radius: 8px;
   background: #eef2f6;
+  color: #222;
   cursor: pointer;
 }
 
@@ -159,10 +155,6 @@ button:focus {
   border: 1px solid #d7d7d7;
   border-radius: 10px;
   padding: 8px 10px;
-  min-height: 60px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 
 .food-summary .summary-card {
@@ -206,18 +198,19 @@ button:focus {
 
 .quick-amount-btn {
   background: #f2f5f8;
+  color: #222;
 }
 
 .primary-btn {
   background: #2f6fed;
-  color: #fff;
   border-color: #2f6fed;
+  color: #fff;
 }
 
 .cancel-btn {
   background: #d9ecff;
-  color: #114c9c;
   border-color: #8bb9f1;
+  color: #114c9c;
 }
 
 .form-actions {
@@ -238,15 +231,14 @@ button:focus {
 }
 
 .entries-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: block;
 }
 
 .entry-card {
   border: 1px solid #d5dbe2;
   border-radius: 10px;
   padding: 9px 10px;
+  margin-bottom: 8px;
 }
 
 .food-day-a {
@@ -273,7 +265,7 @@ button:focus {
 }
 
 .entry-main {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -299,7 +291,7 @@ button:focus {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .action-btn {
@@ -307,16 +299,13 @@ button:focus {
   min-height: 34px;
   padding: 6px 10px;
   background: #f2f5f8;
+  color: #222;
 }
 
 .delete-btn {
   background: #fff0f0;
   border-color: #e2aaaa;
   color: #a12626;
-}
-
-.hidden {
-  display: none !important;
 }
 
 .empty-state {
@@ -326,6 +315,10 @@ button:focus {
   background: #fafbfd;
   color: #5a6470;
   font-size: 0.92rem;
+}
+
+.hidden {
+  display: none !important;
 }
 
 @media (min-width: 640px) {
@@ -346,5 +339,3 @@ button:focus {
     flex-direction: row;
   }
 }
-
-/* End Version 1 Rollback Baseline */
