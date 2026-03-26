@@ -1,6 +1,6 @@
 /*
 Trip Budget Tracker
-Version: v13
+Version: v15
 Date: Mar 26, 2026
 File: js/app.js
 */
@@ -8,7 +8,7 @@ File: js/app.js
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "tripBudgetTracker_v13";
+  const STORAGE_KEY = "tripBudgetTracker_v15";
 
   const state = {
     currency: "EUR",
@@ -57,16 +57,13 @@ File: js/app.js
     accommodationNote: document.getElementById("accommodationNote"),
     addAccommodationBtn: document.getElementById("addAccommodationBtn"),
     cancelAccommodationEditBtn: document.getElementById("cancelAccommodationEditBtn"),
-    accommodationEntriesList: document.getElementById("accommodationEntriesList"),
-
-    diagnosticFiller: document.getElementById("diagnosticFiller")
+    accommodationEntriesList: document.getElementById("accommodationEntriesList")
   };
 
   function init() {
     loadState();
     bindEvents();
     syncInputsFromState();
-    buildDiagnosticFiller();
     renderAll();
   }
 
@@ -144,16 +141,6 @@ File: js/app.js
     els.dayNumber.value = state.dayNumber;
     els.foodBudget.value = Number(state.foodBudget).toFixed(2);
     els.accommodationBudget.value = Number(state.accommodationBudget).toFixed(2);
-  }
-
-  function buildDiagnosticFiller() {
-    els.diagnosticFiller.innerHTML = "";
-    for (let i = 1; i <= 50; i += 1) {
-      const line = document.createElement("div");
-      line.className = "diagnostic-line";
-      line.textContent = "Diagnostic line " + i + " - if you can reach this, scrolling works.";
-      els.diagnosticFiller.appendChild(line);
-    }
   }
 
   function renderAll() {
