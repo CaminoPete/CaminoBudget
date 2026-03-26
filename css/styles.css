@@ -1,161 +1,220 @@
-<!--
+/*
 Trip Budget Tracker
-Version: v14
+Version: v15
 Date: Mar 26, 2026
-File: index.html
--->
+File: css/styles.css
+*/
 
-<!DOCTYPE html>
-<html lang="en-CA">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trip Budget Tracker</title>
-  <link rel="stylesheet" href="css/styles.css?v=14">
-</head>
-<body>
-  <div class="page">
-    <header class="header">
-      <h1>Trip Budget Tracker</h1>
-      <div class="version">v14</div>
-    </header>
+html {
+  margin: 0;
+  padding: 0;
+}
 
-    <section class="panel">
-      <h2>Trip Settings</h2>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  background: #f5f5f5;
+  color: #222;
+}
 
-      <div class="field">
-        <label for="currency">Currency</label>
-        <select id="currency">
-          <option value="EUR">Euros (€)</option>
-          <option value="CAD">Canadian Dollars ($)</option>
-          <option value="USD">USA Dollars (US$)</option>
-        </select>
-      </div>
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 12px;
+}
 
-      <div class="field">
-        <label for="numDays">Number of Days</label>
-        <input id="numDays" type="number" min="1" step="1" value="40">
-      </div>
+.header {
+  margin-bottom: 12px;
+}
 
-      <div class="field">
-        <label for="dayNumber">Day Number</label>
-        <div class="day-row">
-          <button type="button" id="prevDayBtn">Previous</button>
-          <input id="dayNumber" type="text" value="D1" maxlength="4">
-          <button type="button" id="nextDayBtn">Next</button>
-        </div>
-      </div>
-    </section>
+.header h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.8rem;
+}
 
-    <section class="panel">
-      <h2 id="foodSectionTitle">Food - for D1</h2>
+.version {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #555;
+}
 
-      <div class="field">
-        <label for="foodBudget">Total Food Budget</label>
-        <input id="foodBudget" type="number" min="0" step="0.01" value="1500">
-      </div>
+.panel {
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+}
 
-      <div class="summary-box food-box">
-        <div><strong>Starting Daily Food Budget:</strong> <span id="foodStartingDaily">€0.00</span></div>
-        <div><strong>Remaining Food Budget:</strong> <span id="foodRemainingBudget">€0.00</span></div>
-        <div><strong>Remaining Daily Food Budget:</strong> <span id="foodRemainingDaily">€0.00</span></div>
-        <div><strong id="foodSpentTodayLabel">Spent Today - D1</strong>: <span id="foodSpentToday">€0.00</span></div>
-      </div>
+.field {
+  margin-bottom: 10px;
+}
 
-      <h3 id="foodEntryTitle">Add Food Entry - for D1</h3>
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
 
-      <div class="quick-row">
-        <button type="button" class="quick-amount-btn" data-target="foodAmount" data-value="2.00">2</button>
-        <button type="button" class="quick-amount-btn" data-target="foodAmount" data-value="5.00">5</button>
-        <button type="button" class="quick-amount-btn" data-target="foodAmount" data-value="10.00">10</button>
-        <button type="button" class="quick-amount-btn" data-target="foodAmount" data-value="15.00">15</button>
-        <button type="button" class="quick-amount-btn" data-target="foodAmount" data-value="20.00">20</button>
-      </div>
+input,
+select,
+button {
+  font: inherit;
+}
 
-      <div class="field">
-        <label for="foodType">Food Type</label>
-        <select id="foodType">
-          <option value="Breakfast">Breakfast</option>
-          <option value="Lunch">Lunch</option>
-          <option value="Dinner">Dinner</option>
-          <option value="Snack">Snack</option>
-          <option value="Drinks">Drinks</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px;
+  border: 1px solid #bbbbbb;
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+}
 
-      <div class="field">
-        <label for="foodAmount">Amount</label>
-        <input id="foodAmount" type="number" min="0" step="0.01">
-      </div>
+button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #999999;
+  border-radius: 6px;
+  background: #efefef;
+  color: #222;
+  cursor: pointer;
+}
 
-      <div class="field">
-        <label for="foodNote">Note (optional)</label>
-        <input id="foodNote" type="text" maxlength="120">
-      </div>
+.day-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
-      <div class="button-row">
-        <button type="button" id="addFoodBtn">Add Food Entry</button>
-        <button type="button" id="cancelFoodEditBtn" class="cancel hidden">Cancel Edit</button>
-      </div>
+.day-row input {
+  max-width: 90px;
+  text-align: center;
+  font-weight: bold;
+}
 
-      <h3>Food Entries</h3>
-      <div class="listbox-wrap food-listbox-wrap">
-        <div id="foodEntriesList" class="entries-list scroll-list"></div>
-      </div>
-    </section>
+.quick-row,
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
 
-    <section class="panel">
-      <h2 id="accommodationSectionTitle">Accommodation - for D1</h2>
+.summary-box {
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border: 1px solid #cccccc;
+}
 
-      <div class="field">
-        <label for="accommodationBudget">Total Accommodation Budget</label>
-        <input id="accommodationBudget" type="number" min="0" step="0.01" value="1500">
-      </div>
+.food-box {
+  background: #fff8d8;
+}
 
-      <div class="summary-box acc-box">
-        <div><strong>Starting Daily Accommodation Budget:</strong> <span id="accStartingDaily">$0.00</span></div>
-        <div><strong>Remaining Accommodation Budget:</strong> <span id="accRemainingBudget">$0.00</span></div>
-        <div><strong>Remaining Daily Accommodation Budget:</strong> <span id="accRemainingDaily">$0.00</span></div>
-        <div><strong id="accSpentTodayLabel">Spent Today - D1</strong>: <span id="accSpentToday">$0.00</span></div>
-      </div>
+.acc-box {
+  background: #eaf4ff;
+}
 
-      <h3 id="accommodationEntryTitle">Add Accommodation Entry - for D1</h3>
+.cancel {
+  background: #d9ecff;
+  color: #114c9c;
+  border-color: #8bb9f1;
+}
 
-      <div class="field">
-        <label for="accommodationType">Accommodation Type</label>
-        <select id="accommodationType">
-          <option value="Albergue" selected>Albergue</option>
-          <option value="Donativo">Donativo</option>
-          <option value="Campsite">Campsite</option>
-          <option value="Hotel">Hotel</option>
-          <option value="Hostel">Hostel</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
+.hidden {
+  display: none !important;
+}
 
-      <div class="field">
-        <label for="accommodationAmount">Amount</label>
-        <input id="accommodationAmount" type="number" min="0" step="0.01">
-      </div>
+.entries-list {
+  height: 240px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  border: 2px solid #8c8c8c;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fcfcfc;
+  -webkit-overflow-scrolling: touch;
+}
 
-      <div class="field">
-        <label for="accommodationNote">Note (optional)</label>
-        <input id="accommodationNote" type="text" maxlength="120">
-      </div>
+.food-scrollbox {
+  background: #fffef6;
+}
 
-      <div class="button-row">
-        <button type="button" id="addAccommodationBtn">Add Accommodation Entry</button>
-        <button type="button" id="cancelAccommodationEditBtn" class="cancel hidden">Cancel Edit</button>
-      </div>
+.acc-scrollbox {
+  background: #f8fbff;
+}
 
-      <h3>Accommodation Entries</h3>
-      <div class="listbox-wrap acc-listbox-wrap">
-        <div id="accommodationEntriesList" class="entries-list scroll-list"></div>
-      </div>
-    </section>
-  </div>
+.entry-card {
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
 
-  <script src="js/app.js?v=14"></script>
-</body>
-</html>
+.entry-card:last-child {
+  margin-bottom: 0;
+}
+
+.food-day-a {
+  background: #fffdf2;
+}
+
+.food-day-b {
+  background: #fff7cf;
+}
+
+.acc-day-a {
+  background: #f7fbff;
+}
+
+.acc-day-b {
+  background: #eaf4ff;
+}
+
+.entry-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.entry-meta {
+  font-size: 0.92rem;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.entry-note {
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delete-btn {
+  background: #fff0f0;
+  color: #a12626;
+  border-color: #d9a0a0;
+}
+
+.empty-state {
+  padding: 10px;
+  border: 1px dashed #bbbbbb;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #555;
+}
+
+@media (max-width: 640px) {
+  .entries-list {
+    height: 220px;
+  }
+}
