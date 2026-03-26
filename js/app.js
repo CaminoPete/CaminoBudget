@@ -1,6 +1,6 @@
 /*
 Trip Budget Tracker
-Version: v15
+Version: v16
 Date: Mar 26, 2026
 File: js/app.js
 */
@@ -8,7 +8,7 @@ File: js/app.js
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "tripBudgetTracker_v15";
+  const STORAGE_KEY = "tripBudgetTracker_v16";
 
   const state = {
     currency: "EUR",
