@@ -1,6 +1,6 @@
 <!--
 Trip Budget Tracker
-Version: v14
+Version: v15
 Date: Mar 26, 2026
 File: index.html
 -->
@@ -11,13 +11,13 @@ File: index.html
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trip Budget Tracker</title>
-  <link rel="stylesheet" href="css/styles.css?v=14">
+  <link rel="stylesheet" href="css/styles.css?v=15">
 </head>
 <body>
   <div class="page">
     <header class="header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version">v14</div>
+      <div class="version">v15</div>
     </header>
 
     <section class="panel">
@@ -100,9 +100,7 @@ File: index.html
       </div>
 
       <h3>Food Entries</h3>
-      <div class="listbox-wrap food-listbox-wrap">
-        <div id="foodEntriesList" class="entries-list scroll-list"></div>
-      </div>
+      <div id="foodEntriesList" class="entries-list food-scrollbox"></div>
     </section>
 
     <section class="panel">
@@ -150,12 +148,10 @@ File: index.html
       </div>
 
       <h3>Accommodation Entries</h3>
-      <div class="listbox-wrap acc-listbox-wrap">
-        <div id="accommodationEntriesList" class="entries-list scroll-list"></div>
-      </div>
+      <div id="accommodationEntriesList" class="entries-list acc-scrollbox"></div>
     </section>
   </div>
 
-  <script src="js/app.js?v=14"></script>
+  <script src="js/app.js?v=15"></script>
 </body>
 </html>
