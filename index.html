@@ -1,6 +1,6 @@
 <!--
 Trip Budget Tracker
-Version: v15
+Version: v16
 Date: Mar 26, 2026
 File: index.html
 -->
@@ -11,16 +11,16 @@ File: index.html
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trip Budget Tracker</title>
-  <link rel="stylesheet" href="css/styles.css?v=15">
+  <link rel="stylesheet" href="css/styles.css?v=16">
 </head>
 <body>
   <div class="page">
     <header class="header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version">v15</div>
+      <div class="version">v16</div>
     </header>
 
-    <section class="panel">
+    <section class="panel settings-panel">
       <h2>Trip Settings</h2>
 
       <div class="field">
@@ -47,7 +47,7 @@ File: index.html
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel food-panel">
       <h2 id="foodSectionTitle">Food - for D1</h2>
 
       <div class="field">
@@ -56,10 +56,22 @@ File: index.html
       </div>
 
       <div class="summary-box food-box">
-        <div><strong>Starting Daily Food Budget:</strong> <span id="foodStartingDaily">€0.00</span></div>
-        <div><strong>Remaining Food Budget:</strong> <span id="foodRemainingBudget">€0.00</span></div>
-        <div><strong>Remaining Daily Food Budget:</strong> <span id="foodRemainingDaily">€0.00</span></div>
-        <div><strong id="foodSpentTodayLabel">Spent Today - D1</strong>: <span id="foodSpentToday">€0.00</span></div>
+        <div class="summary-row">
+          <span class="summary-label">Starting Daily Food Budget</span>
+          <span id="foodStartingDaily" class="summary-value">€0.00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Remaining Food Budget</span>
+          <span id="foodRemainingBudget" class="summary-value">€0.00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Remaining Daily Food Budget</span>
+          <span id="foodRemainingDaily" class="summary-value">€0.00</span>
+        </div>
+        <div class="summary-row">
+          <span id="foodSpentTodayLabel" class="summary-label">Spent Today - D1</span>
+          <span id="foodSpentToday" class="summary-value">€0.00</span>
+        </div>
       </div>
 
       <h3 id="foodEntryTitle">Add Food Entry - for D1</h3>
@@ -95,15 +107,15 @@ File: index.html
       </div>
 
       <div class="button-row">
-        <button type="button" id="addFoodBtn">Add Food Entry</button>
-        <button type="button" id="cancelFoodEditBtn" class="cancel hidden">Cancel Edit</button>
+        <button type="button" id="addFoodBtn" class="primary-btn">Add Food Entry</button>
+        <button type="button" id="cancelFoodEditBtn" class="cancel-btn hidden">Cancel Edit</button>
       </div>
 
       <h3>Food Entries</h3>
       <div id="foodEntriesList" class="entries-list food-scrollbox"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel acc-panel">
       <h2 id="accommodationSectionTitle">Accommodation - for D1</h2>
 
       <div class="field">
@@ -112,10 +124,22 @@ File: index.html
       </div>
 
       <div class="summary-box acc-box">
-        <div><strong>Starting Daily Accommodation Budget:</strong> <span id="accStartingDaily">$0.00</span></div>
-        <div><strong>Remaining Accommodation Budget:</strong> <span id="accRemainingBudget">$0.00</span></div>
-        <div><strong>Remaining Daily Accommodation Budget:</strong> <span id="accRemainingDaily">$0.00</span></div>
-        <div><strong id="accSpentTodayLabel">Spent Today - D1</strong>: <span id="accSpentToday">$0.00</span></div>
+        <div class="summary-row">
+          <span class="summary-label">Starting Daily Accommodation Budget</span>
+          <span id="accStartingDaily" class="summary-value">$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Remaining Accommodation Budget</span>
+          <span id="accRemainingBudget" class="summary-value">$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Remaining Daily Accommodation Budget</span>
+          <span id="accRemainingDaily" class="summary-value">$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span id="accSpentTodayLabel" class="summary-label">Spent Today - D1</span>
+          <span id="accSpentToday" class="summary-value">$0.00</span>
+        </div>
       </div>
 
       <h3 id="accommodationEntryTitle">Add Accommodation Entry - for D1</h3>
@@ -143,8 +167,8 @@ File: index.html
       </div>
 
       <div class="button-row">
-        <button type="button" id="addAccommodationBtn">Add Accommodation Entry</button>
-        <button type="button" id="cancelAccommodationEditBtn" class="cancel hidden">Cancel Edit</button>
+        <button type="button" id="addAccommodationBtn" class="primary-btn">Add Accommodation Entry</button>
+        <button type="button" id="cancelAccommodationEditBtn" class="cancel-btn hidden">Cancel Edit</button>
       </div>
 
       <h3>Accommodation Entries</h3>
@@ -152,6 +176,6 @@ File: index.html
     </section>
   </div>
 
-  <script src="js/app.js?v=15"></script>
+  <script src="js/app.js?v=16"></script>
 </body>
 </html>
