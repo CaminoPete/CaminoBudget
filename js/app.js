@@ -1,6 +1,6 @@
 /*
 Trip Budget Tracker
-Version: v12
+Version: v13
 Date: Mar 26, 2026
 File: js/app.js
 */
@@ -8,7 +8,7 @@ File: js/app.js
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "tripBudgetTracker_v12";
+  const STORAGE_KEY = "tripBudgetTracker_v13";
 
   const state = {
     currency: "EUR",
@@ -57,13 +57,16 @@ File: js/app.js
     accommodationNote: document.getElementById("accommodationNote"),
     addAccommodationBtn: document.getElementById("addAccommodationBtn"),
     cancelAccommodationEditBtn: document.getElementById("cancelAccommodationEditBtn"),
-    accommodationEntriesList: document.getElementById("accommodationEntriesList")
+    accommodationEntriesList: document.getElementById("accommodationEntriesList"),
+
+    diagnosticFiller: document.getElementById("diagnosticFiller")
   };
 
   function init() {
     loadState();
     bindEvents();
     syncInputsFromState();
+    buildDiagnosticFiller();
     renderAll();
   }
 
@@ -143,6 +146,16 @@ File: js/app.js
     els.accommodationBudget.value = Number(state.accommodationBudget).toFixed(2);
   }
 
+  function buildDiagnosticFiller() {
+    els.diagnosticFiller.innerHTML = "";
+    for (let i = 1; i <= 50; i += 1) {
+      const line = document.createElement("div");
+      line.className = "diagnostic-line";
+      line.textContent = "Diagnostic line " + i + " - if you can reach this, scrolling works.";
+      els.diagnosticFiller.appendChild(line);
+    }
+  }
+
   function renderAll() {
     updateTitles();
     renderSummaries();
@@ -152,7 +165,6 @@ File: js/app.js
 
   function updateTitles() {
     const day = state.dayNumber;
-
     els.foodSectionTitle.textContent = "Food - for " + day;
     els.foodEntryTitle.textContent = "Add Food Entry - for " + day;
     els.foodSpentTodayLabel.textContent = "Spent Today - " + day;
@@ -307,12 +319,6 @@ File: js/app.js
       const card = document.createElement("div");
       card.className = "entry-card " + getAlternatingDayClass(entry.dayNumber, list, "food");
 
-      const topRow = document.createElement("div");
-      topRow.className = "entry-top-row";
-
-      const main = document.createElement("div");
-      main.className = "entry-main";
-
       const title = document.createElement("div");
       title.className = "entry-title";
       title.textContent = entry.type + " - " + formatCurrency(entry.amount);
@@ -321,14 +327,14 @@ File: js/app.js
       meta.className = "entry-meta";
       meta.textContent = entry.dayNumber + " • " + entry.dateStamp;
 
-      main.appendChild(title);
-      main.appendChild(meta);
+      card.appendChild(title);
+      card.appendChild(meta);
 
       if (entry.note) {
         const note = document.createElement("div");
         note.className = "entry-note";
         note.textContent = entry.note;
-        main.appendChild(note);
+        card.appendChild(note);
       }
 
       const actions = document.createElement("div");
@@ -336,7 +342,6 @@ File: js/app.js
 
       const editBtn = document.createElement("button");
       editBtn.type = "button";
-      editBtn.className = "action-btn";
       editBtn.textContent = "Edit";
       editBtn.addEventListener("click", function () {
         startFoodEdit(entry.id);
@@ -344,7 +349,7 @@ File: js/app.js
 
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
-      deleteBtn.className = "action-btn delete-btn";
+      deleteBtn.className = "delete-btn";
       deleteBtn.textContent = "Delete";
       deleteBtn.addEventListener("click", function () {
         deleteFoodEntry(entry.id);
@@ -352,10 +357,7 @@ File: js/app.js
 
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
-
-      topRow.appendChild(main);
-      topRow.appendChild(actions);
-      card.appendChild(topRow);
+      card.appendChild(actions);
 
       els.foodEntriesList.appendChild(card);
     });
@@ -374,12 +376,6 @@ File: js/app.js
       const card = document.createElement("div");
       card.className = "entry-card " + getAlternatingDayClass(entry.dayNumber, list, "acc");
 
-      const topRow = document.createElement("div");
-      topRow.className = "entry-top-row";
-
-      const main = document.createElement("div");
-      main.className = "entry-main";
-
       const title = document.createElement("div");
       title.className = "entry-title";
       title.textContent = entry.type + " - " + formatCurrency(entry.amount);
@@ -388,14 +384,14 @@ File: js/app.js
       meta.className = "entry-meta";
       meta.textContent = entry.dayNumber + " • " + entry.dateStamp;
 
-      main.appendChild(title);
-      main.appendChild(meta);
+      card.appendChild(title);
+      card.appendChild(meta);
 
       if (entry.note) {
         const note = document.createElement("div");
         note.className = "entry-note";
         note.textContent = entry.note;
-        main.appendChild(note);
+        card.appendChild(note);
       }
 
       const actions = document.createElement("div");
@@ -403,7 +399,6 @@ File: js/app.js
 
       const editBtn = document.createElement("button");
       editBtn.type = "button";
-      editBtn.className = "action-btn";
       editBtn.textContent = "Edit";
       editBtn.addEventListener("click", function () {
         startAccommodationEdit(entry.id);
@@ -411,7 +406,7 @@ File: js/app.js
 
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
-      deleteBtn.className = "action-btn delete-btn";
+      deleteBtn.className = "delete-btn";
       deleteBtn.textContent = "Delete";
       deleteBtn.addEventListener("click", function () {
         deleteAccommodationEntry(entry.id);
@@ -419,10 +414,7 @@ File: js/app.js
 
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
-
-      topRow.appendChild(main);
-      topRow.appendChild(actions);
-      card.appendChild(topRow);
+      card.appendChild(actions);
 
       els.accommodationEntriesList.appendChild(card);
     });
@@ -440,7 +432,6 @@ File: js/app.js
     state.editingFoodId = id;
     state.dayNumber = sanitizeDayNumber(entry.dayNumber);
     els.dayNumber.value = state.dayNumber;
-
     els.foodType.value = entry.type;
     els.foodAmount.value = Number(entry.amount).toFixed(2);
     els.foodNote.value = entry.note || "";
@@ -463,7 +454,6 @@ File: js/app.js
     state.editingAccommodationId = id;
     state.dayNumber = sanitizeDayNumber(entry.dayNumber);
     els.dayNumber.value = state.dayNumber;
-
     els.accommodationType.value = entry.type;
     els.accommodationAmount.value = Number(entry.amount).toFixed(2);
     els.accommodationNote.value = entry.note || "";
@@ -564,7 +554,6 @@ File: js/app.js
     if (!match) {
       return { prefix: "D", number: 1 };
     }
-
     return {
       prefix: match[1],
       number: parseInt(match[2], 10)
@@ -583,10 +572,7 @@ File: js/app.js
     if (!match) {
       return "D1";
     }
-
-    const prefix = match[1];
-    const number = Math.max(1, parseInt(match[2], 10));
-    return prefix + number;
+    return match[1] + Math.max(1, parseInt(match[2], 10));
   }
 
   function sanitizeMoney(value) {
@@ -605,11 +591,9 @@ File: js/app.js
     if (state.currency === "EUR") {
       return sign + "€" + abs;
     }
-
     if (state.currency === "USD") {
       return sign + "US$" + abs;
     }
-
     return sign + "$" + abs;
   }
 
@@ -677,7 +661,6 @@ File: js/app.js
       }
 
       const saved = JSON.parse(raw);
-
       state.currency = saved.currency || "EUR";
       state.numDays = isFinite(saved.numDays) ? Number(saved.numDays) : 40;
       state.dayNumber = sanitizeDayNumber(saved.dayNumber || "D1");
