@@ -1,4 +1,4 @@
-/* Version #30 Mar 24, 2026 12:30 PM */
+/* Version #31 Apr 26, 2026 10:55 AM */
 
 :root {
   --bg: #efefef;
@@ -22,6 +22,7 @@
   --edit-outline: #2d6cdf;
   --edit-fill: #edf4ff;
   --soft-dark: #555;
+  --good: #1f6b35;
 }
 
 * {
@@ -248,6 +249,24 @@ select {
   line-height: 1.2;
 }
 
+.remaining-with-status {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.budget-status {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--good);
+  white-space: nowrap;
+}
+
+.budget-status.over-budget {
+  color: var(--danger);
+}
+
 .entry-title {
   margin: 10px 0 6px;
   font-size: 1rem;
@@ -284,30 +303,6 @@ select {
   max-width: 560px;
 }
 
-.quick-amounts-wrap {
-  margin-bottom: 12px;
-  max-width: 560px;
-}
-
-.quick-label {
-  font-size: 0.96rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #444;
-}
-
-.quick-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.quick-amount-btn,
-.quick-clear-btn {
-  min-width: 64px;
-  min-height: 40px;
-}
-
 .entries-section {
   margin-top: 6px;
   max-width: 560px;
@@ -323,6 +318,13 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  /* Version 31: retained working internal scrolling fix */
+  max-height: 260px;
+  min-height: 120px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
 }
 
 .empty-state {
@@ -476,7 +478,6 @@ select {
   .entry-row,
   .action-row,
   .note-block,
-  .quick-amounts-wrap,
   .entries-section,
   .compact-field {
     max-width: 100%;
