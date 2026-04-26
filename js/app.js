@@ -1,4 +1,4 @@
-// Version #31 Apr 26, 2026 10:55 AM
+// Version #32 Apr 26, 2026 10:45 AM
 
 (function () {
   "use strict";
@@ -63,6 +63,13 @@
     modalBody: document.getElementById("appModalBody"),
     modalOk: document.getElementById("appModalOk"),
     modalCancel: document.getElementById("appModalCancel")
+  };
+
+  const layoutEls = {
+    foodEntryRow: els.addFoodBtn.parentElement,
+    foodActionRow: els.cancelFoodEditBtn.parentElement,
+    accommodationEntryRow: els.addAccommodationBtn.parentElement,
+    accommodationActionRow: els.cancelAccommodationEditBtn.parentElement
   };
 
   let modalResolver = null;
@@ -213,12 +220,12 @@
     els.foodHeading.querySelector(".section-main").textContent = "Food - for " + dayLabel;
     els.foodHeadingDate.textContent = headingDate;
     els.foodEntryHeading.innerHTML = (currentEditFoodId ? 'Edit Food Entry <span>- for ' : 'Add Food Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
-    els.foodSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
+    els.foodSpentTodayLabel.textContent = "Spent Today - " + dayLabel + ":";
 
     els.accommodationHeading.querySelector(".section-main").textContent = "Accommodation - for " + dayLabel;
     els.accommodationHeadingDate.textContent = headingDate;
     els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
-    els.accommodationSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
+    els.accommodationSpentTodayLabel.textContent = "Spent Today - " + dayLabel + ":";
 
     renderFoodSummary();
     renderAccommodationSummary();
@@ -234,14 +241,13 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.foodEntries);
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent);
 
     els.foodStartingDaily.textContent = formatCurrency(startingDaily);
     els.foodRemainingBudget.textContent = formatCurrency(remainingBudget);
     els.foodRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.foodSpentToday.textContent = formatCurrency(spentToday);
-    els.foodBudgetStatus.textContent = formatSignedCurrency(budgetStatus);
-    els.foodBudgetStatus.classList.toggle("over-budget", budgetStatus < 0);
+    setBudgetStatus(els.foodBudgetStatus, budgetStatus);
   }
 
   function renderAccommodationSummary() {
@@ -251,14 +257,13 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.accommodationEntries);
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent);
 
     els.accommodationStartingDaily.textContent = formatCurrency(startingDaily);
     els.accommodationRemainingBudget.textContent = formatCurrency(remainingBudget);
     els.accommodationRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.accommodationSpentToday.textContent = formatCurrency(spentToday);
-    els.accommodationBudgetStatus.textContent = formatSignedCurrency(budgetStatus);
-    els.accommodationBudgetStatus.classList.toggle("over-budget", budgetStatus < 0);
+    setBudgetStatus(els.accommodationBudgetStatus, budgetStatus);
   }
 
   function renderFoodEntries() {
@@ -281,15 +286,15 @@
       item.innerHTML = [
         '<div class="entry-top">',
         '<div class="entry-main">',
-        '<div class="entry-line-1">' + escapeHtml(entry.type) + ' - ' + escapeHtml(entry.dayNumber) + '</div>',
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + '</div>',
-        '</div>',
-        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + '</div>',
-        '</div>',
+        '<div class="entry-line-1">' + escapeHtml(entry.type) + " - " + escapeHtml(entry.dayNumber) + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        "</div>",
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
+        "</div>",
         '<div class="entry-actions">',
         '<button type="button" class="small-action-btn edit-food-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
         '<button type="button" class="small-action-btn delete-btn delete-food-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
-        '</div>'
+        "</div>"
       ].join("");
 
       els.foodEntriesList.appendChild(item);
@@ -328,15 +333,15 @@
       item.innerHTML = [
         '<div class="entry-top">',
         '<div class="entry-main">',
-        '<div class="entry-line-1">' + escapeHtml(entry.type) + ' - ' + escapeHtml(entry.dayNumber) + '</div>',
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + '</div>',
-        '</div>',
-        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + '</div>',
-        '</div>',
+        '<div class="entry-line-1">' + escapeHtml(entry.type) + " - " + escapeHtml(entry.dayNumber) + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        "</div>",
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
+        "</div>",
         '<div class="entry-actions">',
         '<button type="button" class="small-action-btn edit-acc-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
         '<button type="button" class="small-action-btn delete-btn delete-acc-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
-        '</div>'
+        "</div>"
       ].join("");
 
       els.accommodationEntriesList.appendChild(item);
@@ -654,26 +659,45 @@
     els.accommodationTypeSelect.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationAmountInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationNoteInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
+
+    positionFoodActionButtons();
+    positionAccommodationActionButtons();
   }
 
-  function calculateBudgetStatus(totalBudget, totalSpent, entries) {
+  function positionFoodActionButtons() {
+    if (currentEditFoodId) {
+      if (els.addFoodBtn.parentElement !== layoutEls.foodActionRow) {
+        layoutEls.foodActionRow.appendChild(els.addFoodBtn);
+      }
+    } else {
+      if (els.addFoodBtn.parentElement !== layoutEls.foodEntryRow) {
+        layoutEls.foodEntryRow.appendChild(els.addFoodBtn);
+      }
+    }
+  }
+
+  function positionAccommodationActionButtons() {
+    if (currentEditAccommodationId) {
+      if (els.addAccommodationBtn.parentElement !== layoutEls.accommodationActionRow) {
+        layoutEls.accommodationActionRow.appendChild(els.addAccommodationBtn);
+      }
+    } else {
+      if (els.addAccommodationBtn.parentElement !== layoutEls.accommodationEntryRow) {
+        layoutEls.accommodationEntryRow.appendChild(els.addAccommodationBtn);
+      }
+    }
+  }
+
+  function calculateBudgetStatus(totalBudget, totalSpent) {
     const dailyBudget = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
-    const highestUsedDayNumber = getHighestUsedDayNumber(entries);
-    const currentDayNumber = getNumericDayNumber(appState.dayNumber);
-    const daysToCount = Math.max(1, highestUsedDayNumber, currentDayNumber);
-    const expectedSpent = dailyBudget * daysToCount;
+    const currentDayNumber = getCurrentNumericDayNumber();
+    const expectedSpendSoFar = dailyBudget * currentDayNumber;
 
-    return expectedSpent - totalSpent;
+    return expectedSpendSoFar - totalSpent;
   }
 
-  function getHighestUsedDayNumber(entries) {
-    return entries.reduce(function (highest, entry) {
-      return Math.max(highest, getNumericDayNumber(entry.dayNumber));
-    }, 0);
-  }
-
-  function getNumericDayNumber(dayNumber) {
-    const clean = sanitizeDayNumber(dayNumber);
+  function getCurrentNumericDayNumber() {
+    const clean = sanitizeDayNumber(appState.dayNumber);
     const match = clean.match(/^D(\d{1,3})$/);
 
     if (!match) {
@@ -683,9 +707,25 @@
     return Math.max(1, parseInt(match[1], 10) || 1);
   }
 
-  function formatSignedCurrency(amount) {
-    const sign = amount >= 0 ? "+" : "-";
-    return sign + formatCurrency(Math.abs(amount));
+  function setBudgetStatus(element, amount) {
+    if (!element) {
+      return;
+    }
+
+    const rounded = Math.round(amount * 100) / 100;
+
+    element.classList.remove("budget-status-plus", "budget-status-minus", "budget-status-zero");
+
+    if (rounded > 0) {
+      element.textContent = "+" + formatCurrency(rounded);
+      element.classList.add("budget-status-plus");
+    } else if (rounded < 0) {
+      element.textContent = "-" + formatCurrency(Math.abs(rounded));
+      element.classList.add("budget-status-minus");
+    } else {
+      element.textContent = formatCurrency(0);
+      element.classList.add("budget-status-zero");
+    }
   }
 
   function getSortedEntries(entries) {
