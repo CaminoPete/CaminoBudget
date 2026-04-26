@@ -1,4 +1,4 @@
-// Version #32 Apr 26, 2026 8:00 AM
+// Version #30 Mar 24, 2026 12:30 PM
 
 (function () {
   "use strict";
@@ -9,7 +9,6 @@
     currency: "EUR",
     numberOfDays: 40,
     dayNumber: "D1",
-    entryDate: getTodayDateString(),
     foodBudget: 1500,
     accommodationBudget: 900,
     foodEntries: [],
@@ -20,7 +19,6 @@
     currencySelect: document.getElementById("currencySelect"),
     daysInput: document.getElementById("daysInput"),
     dayNumberInput: document.getElementById("dayNumberInput"),
-    entryDateInput: document.getElementById("entryDateInput"),
     prevDayBtn: document.getElementById("prevDayBtn"),
     nextDayBtn: document.getElementById("nextDayBtn"),
 
@@ -29,7 +27,6 @@
     foodBudgetInput: document.getElementById("foodBudgetInput"),
     foodStartingDaily: document.getElementById("foodStartingDaily"),
     foodRemainingBudget: document.getElementById("foodRemainingBudget"),
-    foodBudgetStatus: document.getElementById("foodBudgetStatus"),
     foodRemainingDaily: document.getElementById("foodRemainingDaily"),
     foodSpentTodayLabel: document.getElementById("foodSpentTodayLabel"),
     foodSpentToday: document.getElementById("foodSpentToday"),
@@ -47,7 +44,6 @@
     accommodationBudgetInput: document.getElementById("accommodationBudgetInput"),
     accommodationStartingDaily: document.getElementById("accommodationStartingDaily"),
     accommodationRemainingBudget: document.getElementById("accommodationRemainingBudget"),
-    accommodationBudgetStatus: document.getElementById("accommodationBudgetStatus"),
     accommodationRemainingDaily: document.getElementById("accommodationRemainingDaily"),
     accommodationSpentTodayLabel: document.getElementById("accommodationSpentTodayLabel"),
     accommodationSpentToday: document.getElementById("accommodationSpentToday"),
@@ -67,13 +63,6 @@
     modalCancel: document.getElementById("appModalCancel")
   };
 
-  const layoutEls = {
-    foodEntryRow: els.addFoodBtn.parentElement,
-    foodActionRow: els.cancelFoodEditBtn.parentElement,
-    accommodationEntryRow: els.addAccommodationBtn.parentElement,
-    accommodationActionRow: els.cancelAccommodationEditBtn.parentElement
-  };
-
   let modalResolver = null;
   let currentEditFoodId = null;
   let currentEditAccommodationId = null;
@@ -82,11 +71,6 @@
 
   function init() {
     loadState();
-
-    if (!appState.entryDate) {
-      appState.entryDate = getTodayDateString();
-    }
-
     bindEvents();
     syncInputsFromState();
     renderAll();
@@ -113,12 +97,6 @@
       syncInputsFromState();
       saveState();
       renderAll();
-    });
-
-    els.entryDateInput.addEventListener("change", function () {
-      appState.entryDate = els.entryDateInput.value || getTodayDateString();
-      syncInputsFromState();
-      saveState();
     });
 
     els.prevDayBtn.addEventListener("click", function () {
@@ -163,6 +141,24 @@
       renderAll();
     });
 
+    document.querySelectorAll(".quick-amount-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const targetId = btn.getAttribute("data-target");
+        const target = document.getElementById(targetId);
+        const valueToAdd = parseFloat(btn.getAttribute("data-value")) || 0;
+        const currentValue = parseCurrencyInputValue(target.value);
+        target.value = (currentValue + valueToAdd).toFixed(2);
+      });
+    });
+
+    document.querySelectorAll(".quick-clear-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const targetId = btn.getAttribute("data-target");
+        const target = document.getElementById(targetId);
+        target.value = "";
+      });
+    });
+
     els.modalOk.addEventListener("click", function () {
       closeModal(true);
     });
@@ -203,7 +199,6 @@
     els.currencySelect.value = appState.currency;
     els.daysInput.value = appState.numberOfDays;
     els.dayNumberInput.value = appState.dayNumber;
-    els.entryDateInput.value = appState.entryDate || getTodayDateString();
     els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
     els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
   }
@@ -234,12 +229,12 @@
     els.foodHeading.querySelector(".section-main").textContent = "Food - for " + dayLabel;
     els.foodHeadingDate.textContent = headingDate;
     els.foodEntryHeading.innerHTML = (currentEditFoodId ? 'Edit Food Entry <span>- for ' : 'Add Food Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
-    els.foodSpentTodayLabel.textContent = "Spent Today - " + dayLabel + ":";
+    els.foodSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
 
     els.accommodationHeading.querySelector(".section-main").textContent = "Accommodation - for " + dayLabel;
     els.accommodationHeadingDate.textContent = headingDate;
     els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
-    els.accommodationSpentTodayLabel.textContent = "Spent Today - " + dayLabel + ":";
+    els.accommodationSpentTodayLabel.textContent = 'Spent Today - ' + dayLabel + ':';
 
     renderFoodSummary();
     renderAccommodationSummary();
@@ -255,14 +250,11 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent);
 
     els.foodStartingDaily.textContent = formatCurrency(startingDaily);
     els.foodRemainingBudget.textContent = formatCurrency(remainingBudget);
     els.foodRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.foodSpentToday.textContent = formatCurrency(spentToday);
-    els.foodBudgetStatus.textContent = formatSignedCurrency(budgetStatus);
-    els.foodBudgetStatus.classList.toggle("over-budget", budgetStatus < 0);
   }
 
   function renderAccommodationSummary() {
@@ -272,14 +264,11 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent);
 
     els.accommodationStartingDaily.textContent = formatCurrency(startingDaily);
     els.accommodationRemainingBudget.textContent = formatCurrency(remainingBudget);
     els.accommodationRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.accommodationSpentToday.textContent = formatCurrency(spentToday);
-    els.accommodationBudgetStatus.textContent = formatSignedCurrency(budgetStatus);
-    els.accommodationBudgetStatus.classList.toggle("over-budget", budgetStatus < 0);
   }
 
   function renderFoodEntries() {
@@ -302,15 +291,15 @@
       item.innerHTML = [
         '<div class="entry-top">',
         '<div class="entry-main">',
-        '<div class="entry-line-1">' + escapeHtml(entry.type) + " - " + escapeHtml(entry.dayNumber) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
-        "</div>",
-        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
-        "</div>",
+        '<div class="entry-line-1">' + escapeHtml(entry.type) + ' - ' + escapeHtml(entry.dayNumber) + '</div>',
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + '</div>',
+        '</div>',
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + '</div>',
+        '</div>',
         '<div class="entry-actions">',
         '<button type="button" class="small-action-btn edit-food-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
         '<button type="button" class="small-action-btn delete-btn delete-food-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
-        "</div>"
+        '</div>'
       ].join("");
 
       els.foodEntriesList.appendChild(item);
@@ -349,15 +338,15 @@
       item.innerHTML = [
         '<div class="entry-top">',
         '<div class="entry-main">',
-        '<div class="entry-line-1">' + escapeHtml(entry.type) + " - " + escapeHtml(entry.dayNumber) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
-        "</div>",
-        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
-        "</div>",
+        '<div class="entry-line-1">' + escapeHtml(entry.type) + ' - ' + escapeHtml(entry.dayNumber) + '</div>',
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + '</div>',
+        '</div>',
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + '</div>',
+        '</div>',
         '<div class="entry-actions">',
         '<button type="button" class="small-action-btn edit-acc-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
         '<button type="button" class="small-action-btn delete-btn delete-acc-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
-        "</div>"
+        '</div>'
       ].join("");
 
       els.accommodationEntriesList.appendChild(item);
@@ -403,7 +392,6 @@
       entry.note = note;
       entry.dayNumber = appState.dayNumber;
       entry.dayKey = buildDaySortKey(appState.dayNumber);
-      entry.createdAt = buildIsoFromEntryDate(appState.entryDate);
 
       cancelFoodEdit(false);
       clearFoodEntryInputs();
@@ -420,7 +408,7 @@
       note: note,
       dayNumber: appState.dayNumber,
       dayKey: buildDaySortKey(appState.dayNumber),
-      createdAt: buildIsoFromEntryDate(appState.entryDate)
+      createdAt: new Date().toISOString()
     });
 
     clearFoodEntryInputs();
@@ -455,7 +443,6 @@
       entry.note = note;
       entry.dayNumber = appState.dayNumber;
       entry.dayKey = buildDaySortKey(appState.dayNumber);
-      entry.createdAt = buildIsoFromEntryDate(appState.entryDate);
 
       cancelAccommodationEdit(false);
       clearAccommodationEntryInputs();
@@ -487,7 +474,7 @@
       existingForDay.amount = amount;
       existingForDay.note = note;
       existingForDay.dayKey = buildDaySortKey(appState.dayNumber);
-      existingForDay.createdAt = buildIsoFromEntryDate(appState.entryDate);
+      existingForDay.createdAt = new Date().toISOString();
 
       clearAccommodationEntryInputs();
       saveState();
@@ -502,7 +489,7 @@
       note: note,
       dayNumber: appState.dayNumber,
       dayKey: buildDaySortKey(appState.dayNumber),
-      createdAt: buildIsoFromEntryDate(appState.entryDate)
+      createdAt: new Date().toISOString()
     });
 
     clearAccommodationEntryInputs();
@@ -523,7 +510,6 @@
     cancelAccommodationEdit(false);
     currentEditFoodId = id;
     appState.dayNumber = entry.dayNumber;
-    appState.entryDate = getDateStringFromIso(entry.createdAt);
 
     syncInputsFromState();
     renderAll();
@@ -549,7 +535,6 @@
     cancelFoodEdit(false);
     currentEditAccommodationId = id;
     appState.dayNumber = entry.dayNumber;
-    appState.entryDate = getDateStringFromIso(entry.createdAt);
 
     syncInputsFromState();
     renderAll();
@@ -679,48 +664,6 @@
     els.accommodationTypeSelect.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationAmountInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationNoteInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
-
-    positionFoodActionButtons();
-    positionAccommodationActionButtons();
-  }
-
-  function positionFoodActionButtons() {
-    if (currentEditFoodId) {
-      if (els.addFoodBtn.parentElement !== layoutEls.foodActionRow) {
-        layoutEls.foodActionRow.appendChild(els.addFoodBtn);
-      }
-    } else {
-      if (els.addFoodBtn.parentElement !== layoutEls.foodEntryRow) {
-        layoutEls.foodEntryRow.appendChild(els.addFoodBtn);
-      }
-    }
-  }
-
-  function positionAccommodationActionButtons() {
-    if (currentEditAccommodationId) {
-      if (els.addAccommodationBtn.parentElement !== layoutEls.accommodationActionRow) {
-        layoutEls.accommodationActionRow.appendChild(els.addAccommodationBtn);
-      }
-    } else {
-      if (els.addAccommodationBtn.parentElement !== layoutEls.accommodationEntryRow) {
-        layoutEls.accommodationEntryRow.appendChild(els.addAccommodationBtn);
-      }
-    }
-  }
-
-  function calculateBudgetStatus(totalBudget, totalSpent) {
-    const currentDayKey = buildDaySortKey(appState.dayNumber);
-    const startDayKey = buildDaySortKey("D1");
-    const currentDayNumber = Math.max(1, currentDayKey - startDayKey + 1);
-    const dailyBudget = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
-    const expectedSpent = dailyBudget * currentDayNumber;
-
-    return expectedSpent - totalSpent;
-  }
-
-  function formatSignedCurrency(amount) {
-    const sign = amount >= 0 ? "+" : "-";
-    return sign + formatCurrency(Math.abs(amount));
   }
 
   function getSortedEntries(entries) {
@@ -887,28 +830,6 @@
     });
   }
 
-  function getTodayDateString() {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    return yyyy + "-" + mm + "-" + dd;
-  }
-
-  function buildIsoFromEntryDate(dateString) {
-    const cleanDate = dateString || getTodayDateString();
-    return cleanDate + "T12:00:00.000";
-  }
-
-  function getDateStringFromIso(isoString) {
-    if (!isoString || typeof isoString !== "string") {
-      return getTodayDateString();
-    }
-
-    const match = isoString.match(/^(\d{4}-\d{2}-\d{2})/);
-    return match ? match[1] : getTodayDateString();
-  }
-
   function createId() {
     return "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
   }
@@ -939,7 +860,6 @@
       appState.currency = parsed.currency || appState.currency;
       appState.numberOfDays = Number.isFinite(parsed.numberOfDays) ? parsed.numberOfDays : appState.numberOfDays;
       appState.dayNumber = parsed.dayNumber || appState.dayNumber;
-      appState.entryDate = parsed.entryDate || appState.entryDate;
       appState.foodBudget = Number.isFinite(parsed.foodBudget) ? parsed.foodBudget : appState.foodBudget;
       appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
       appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
