@@ -1,4 +1,4 @@
-/* Version #31 Apr 26, 2026 10:55 AM */
+/* Version #32 Apr 26, 2026 10:45 AM */
 
 :root {
   --bg: #efefef;
@@ -22,7 +22,8 @@
   --edit-outline: #2d6cdf;
   --edit-fill: #edf4ff;
   --soft-dark: #555;
-  --good: #1f6b35;
+  --status-plus: #1f7a35;
+  --status-minus: #b3261e;
 }
 
 * {
@@ -249,22 +250,28 @@ select {
   line-height: 1.2;
 }
 
-.remaining-with-status {
+.remaining-budget-line {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .budget-status {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--good);
-  white-space: nowrap;
+  font-size: 0.96rem;
+  font-weight: 900;
 }
 
-.budget-status.over-budget {
-  color: var(--danger);
+.budget-status-plus {
+  color: var(--status-plus);
+}
+
+.budget-status-minus {
+  color: var(--status-minus);
+}
+
+.budget-status-zero {
+  color: var(--blue);
 }
 
 .entry-title {
@@ -296,6 +303,14 @@ select {
 .action-row {
   max-width: 560px;
   margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-row .primary-btn {
+  width: auto;
+  min-width: 130px;
 }
 
 .note-block {
@@ -319,11 +334,11 @@ select {
   flex-direction: column;
   gap: 8px;
 
-  /* Version 31: retained working internal scrolling fix */
   max-height: 260px;
   min-height: 120px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+
   padding-right: 4px;
 }
 
