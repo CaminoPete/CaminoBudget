@@ -1,4 +1,4 @@
-// Version #30 Mar 24, 2026 12:30 PM
+// Version #31 Apr 26, 2026 10:55 AM
 
 (function () {
   "use strict";
@@ -27,6 +27,7 @@
     foodBudgetInput: document.getElementById("foodBudgetInput"),
     foodStartingDaily: document.getElementById("foodStartingDaily"),
     foodRemainingBudget: document.getElementById("foodRemainingBudget"),
+    foodBudgetStatus: document.getElementById("foodBudgetStatus"),
     foodRemainingDaily: document.getElementById("foodRemainingDaily"),
     foodSpentTodayLabel: document.getElementById("foodSpentTodayLabel"),
     foodSpentToday: document.getElementById("foodSpentToday"),
@@ -44,6 +45,7 @@
     accommodationBudgetInput: document.getElementById("accommodationBudgetInput"),
     accommodationStartingDaily: document.getElementById("accommodationStartingDaily"),
     accommodationRemainingBudget: document.getElementById("accommodationRemainingBudget"),
+    accommodationBudgetStatus: document.getElementById("accommodationBudgetStatus"),
     accommodationRemainingDaily: document.getElementById("accommodationRemainingDaily"),
     accommodationSpentTodayLabel: document.getElementById("accommodationSpentTodayLabel"),
     accommodationSpentToday: document.getElementById("accommodationSpentToday"),
@@ -141,24 +143,6 @@
       renderAll();
     });
 
-    document.querySelectorAll(".quick-amount-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        const targetId = btn.getAttribute("data-target");
-        const target = document.getElementById(targetId);
-        const valueToAdd = parseFloat(btn.getAttribute("data-value")) || 0;
-        const currentValue = parseCurrencyInputValue(target.value);
-        target.value = (currentValue + valueToAdd).toFixed(2);
-      });
-    });
-
-    document.querySelectorAll(".quick-clear-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        const targetId = btn.getAttribute("data-target");
-        const target = document.getElementById(targetId);
-        target.value = "";
-      });
-    });
-
     els.modalOk.addEventListener("click", function () {
       closeModal(true);
     });
@@ -250,11 +234,14 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.foodEntries);
 
     els.foodStartingDaily.textContent = formatCurrency(startingDaily);
     els.foodRemainingBudget.textContent = formatCurrency(remainingBudget);
     els.foodRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.foodSpentToday.textContent = formatCurrency(spentToday);
+    els.foodBudgetStatus.textContent = formatSignedCurrency(budgetStatus);
+    els.foodBudgetStatus.classList.toggle("over-budget", budgetStatus < 0);
   }
 
   function renderAccommodationSummary() {
@@ -264,11 +251,14 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.accommodationEntries);
 
     els.accommodationStartingDaily.textContent = formatCurrency(startingDaily);
     els.accommodationRemainingBudget.textContent = formatCurrency(remainingBudget);
     els.accommodationRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.accommodationSpentToday.textContent = formatCurrency(spentToday);
+    els.accommodationBudgetStatus.textContent = formatSignedCurrency(budgetStatus);
+    els.accommodationBudgetStatus.classList.toggle("over-budget", budgetStatus < 0);
   }
 
   function renderFoodEntries() {
@@ -664,6 +654,38 @@
     els.accommodationTypeSelect.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationAmountInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationNoteInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
+  }
+
+  function calculateBudgetStatus(totalBudget, totalSpent, entries) {
+    const dailyBudget = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const highestUsedDayNumber = getHighestUsedDayNumber(entries);
+    const currentDayNumber = getNumericDayNumber(appState.dayNumber);
+    const daysToCount = Math.max(1, highestUsedDayNumber, currentDayNumber);
+    const expectedSpent = dailyBudget * daysToCount;
+
+    return expectedSpent - totalSpent;
+  }
+
+  function getHighestUsedDayNumber(entries) {
+    return entries.reduce(function (highest, entry) {
+      return Math.max(highest, getNumericDayNumber(entry.dayNumber));
+    }, 0);
+  }
+
+  function getNumericDayNumber(dayNumber) {
+    const clean = sanitizeDayNumber(dayNumber);
+    const match = clean.match(/^D(\d{1,3})$/);
+
+    if (!match) {
+      return 1;
+    }
+
+    return Math.max(1, parseInt(match[1], 10) || 1);
+  }
+
+  function formatSignedCurrency(amount) {
+    const sign = amount >= 0 ? "+" : "-";
+    return sign + formatCurrency(Math.abs(amount));
   }
 
   function getSortedEntries(entries) {
