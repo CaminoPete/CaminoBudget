@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #32 Apr 26, 2026 8:00 AM -->
+  <!-- Version #33 Apr 26, 2026 8:15 AM -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip Budget Tracker</title>
@@ -11,14 +11,16 @@
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v32</div>
+      <div class="version-tag">v33</div>
     </header>
 
     <main class="app-main">
+
       <section class="settings-panel">
         <div class="settings-grid">
-          <div class="field-block currency-block">
-            <label for="currencySelect">Currency:</label>
+
+          <div class="field-block">
+            <label>Currency:</label>
             <select id="currencySelect">
               <option value="EUR">Euros (€)</option>
               <option value="CAD">Canadian Dollars ($)</option>
@@ -26,178 +28,101 @@
             </select>
           </div>
 
-          <div class="field-block days-block">
-            <label for="daysInput">Number of Days:</label>
-            <input id="daysInput" type="number" min="1" step="1" value="40" />
+          <div class="field-block">
+            <label>Number of Days:</label>
+            <input id="daysInput" type="number" value="40" />
           </div>
 
           <div class="field-block day-number-block">
-            <label for="dayNumberInput">Day Number:</label>
+            <label>Day Number:</label>
             <div class="day-stepper-row">
-              <button type="button" id="prevDayBtn" class="arrow-btn" aria-label="Previous Day">◀</button>
-              <input id="dayNumberInput" type="text" value="D1" maxlength="4" />
-              <button type="button" id="nextDayBtn" class="arrow-btn" aria-label="Next Day">▶</button>
+              <button id="prevDayBtn">◀</button>
+              <input id="dayNumberInput" value="D1" />
+              <button id="nextDayBtn">▶</button>
             </div>
           </div>
 
-          <div class="field-block entry-date-block">
-            <label for="entryDateInput">Entry Date:</label>
-            <input id="entryDateInput" type="date" />
-          </div>
         </div>
       </section>
 
+      <!-- FOOD -->
       <section class="budget-panel food-panel">
-        <h2 class="section-title" id="foodHeading">
-          <span class="section-main">Food - for D1</span>
-          <span class="section-date" id="foodHeadingDate">Mar 24, 2026</span>
+
+        <h2 class="section-title">
+          <span id="foodHeadingText">Food - for D1</span>
         </h2>
 
-        <div class="field-block compact-field">
-          <label for="foodBudgetInput">Total Food Budget:</label>
-          <input id="foodBudgetInput" class="currency-input" type="text" inputmode="decimal" value="1500" />
-        </div>
+        <input id="foodBudgetInput" value="1500" />
 
         <div class="summary-grid">
-          <div class="summary-card food-card">
-            <div class="summary-label">Starting Daily Food Budget:</div>
-            <div class="summary-value" id="foodStartingDaily">€0.00</div>
+          <div>Daily: <span id="foodStartingDaily"></span></div>
+          <div>
+            Remaining:
+            <span id="foodRemainingBudget"></span>
+            <span id="foodBudgetStatus"></span>
           </div>
-
-          <div class="summary-card food-card">
-            <div class="summary-label">Remaining Food Budget:</div>
-            <div class="summary-value remaining-with-status">
-              <span id="foodRemainingBudget">€0.00</span>
-              <span id="foodBudgetStatus" class="budget-status">€0.00</span>
-            </div>
-          </div>
-
-          <div class="summary-card food-card">
-            <div class="summary-label">Remaining Daily Food Budget:</div>
-            <div class="summary-value" id="foodRemainingDaily">€0.00</div>
-          </div>
-
-          <div class="summary-card food-card">
-            <div class="summary-label" id="foodSpentTodayLabel">Spent Today - D1:</div>
-            <div class="summary-value" id="foodSpentToday">€0.00</div>
-          </div>
+          <div>Remaining Daily: <span id="foodRemainingDaily"></span></div>
+          <div>Spent Today: <span id="foodSpentToday"></span></div>
         </div>
 
-        <h3 class="entry-title" id="foodEntryHeading">Add Food Entry <span>- for D1</span></h3>
-        <div id="foodEditStatus" class="edit-status hidden">Editing selected Food entry</div>
-
-        <div class="entry-row food-entry-row">
+        <div class="entry-row">
           <select id="foodTypeSelect">
-            <option value="Breakfast">Breakfast</option>
-            <option value="Lunch">Lunch</option>
-            <option value="Dinner">Dinner</option>
-            <option value="Snack">Snack</option>
-            <option value="Drinks">Drinks</option>
-            <option value="Other">Other</option>
+            <option>Breakfast</option>
+            <option>Lunch</option>
+            <option>Dinner</option>
           </select>
 
-          <input id="foodAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
+          <input id="foodAmountInput" placeholder="0.00" />
 
-          <button type="button" id="addFoodBtn" class="primary-btn">Add Entry</button>
+          <button id="addFoodBtn">Add Entry</button>
         </div>
 
         <div class="action-row">
-          <button type="button" id="cancelFoodEditBtn" class="primary-btn hidden">Cancel Edit</button>
+          <button id="cancelFoodEditBtn" class="hidden">Cancel Edit</button>
         </div>
 
-        <div class="field-block note-block">
-          <label for="foodNoteInput">Note (optional):</label>
-          <input id="foodNoteInput" type="text" maxlength="120" placeholder="Optional note" />
-        </div>
-
-        <div class="entries-section">
-          <div class="entries-heading">Food Entries:</div>
-          <div id="foodEntriesList" class="entries-list"></div>
-        </div>
+        <div id="foodEntriesList"></div>
       </section>
 
+      <!-- ACCOMMODATION -->
       <section class="budget-panel accommodation-panel">
-        <h2 class="section-title" id="accommodationHeading">
-          <span class="section-main">Accommodation - for D1</span>
-          <span class="section-date" id="accommodationHeadingDate">Mar 24, 2026</span>
+
+        <h2 class="section-title">
+          <span id="accHeadingText">Accommodation - for D1</span>
         </h2>
 
-        <div class="field-block compact-field">
-          <label for="accommodationBudgetInput">Total Accommodation Budget:</label>
-          <input id="accommodationBudgetInput" class="currency-input" type="text" inputmode="decimal" value="900" />
-        </div>
+        <input id="accBudgetInput" value="900" />
 
         <div class="summary-grid">
-          <div class="summary-card accommodation-card">
-            <div class="summary-label">Starting Daily Accommodation Budget:</div>
-            <div class="summary-value" id="accommodationStartingDaily">€0.00</div>
+          <div>Daily: <span id="accStartingDaily"></span></div>
+          <div>
+            Remaining:
+            <span id="accRemainingBudget"></span>
+            <span id="accBudgetStatus"></span>
           </div>
-
-          <div class="summary-card accommodation-card">
-            <div class="summary-label">Remaining Accommodation Budget:</div>
-            <div class="summary-value remaining-with-status">
-              <span id="accommodationRemainingBudget">€0.00</span>
-              <span id="accommodationBudgetStatus" class="budget-status">€0.00</span>
-            </div>
-          </div>
-
-          <div class="summary-card accommodation-card">
-            <div class="summary-label">Remaining Daily Accommodation Budget:</div>
-            <div class="summary-value" id="accommodationRemainingDaily">€0.00</div>
-          </div>
-
-          <div class="summary-card accommodation-card">
-            <div class="summary-label" id="accommodationSpentTodayLabel">Spent Today - D1:</div>
-            <div class="summary-value" id="accommodationSpentToday">€0.00</div>
-          </div>
+          <div>Remaining Daily: <span id="accRemainingDaily"></span></div>
+          <div>Spent Today: <span id="accSpentToday"></span></div>
         </div>
 
-        <h3 class="entry-title" id="accommodationEntryHeading">Add Accommodation Entry <span>- for D1</span></h3>
-        <div id="accommodationEditStatus" class="edit-status hidden">Editing selected Accommodation entry</div>
-
-        <div class="entry-row accommodation-entry-row">
-          <select id="accommodationTypeSelect">
-            <option value="Albergue" selected>Albergue</option>
-            <option value="Donativo">Donativo</option>
-            <option value="Campsite">Campsite</option>
-            <option value="Hotel">Hotel</option>
-            <option value="Hostel">Hostel</option>
-            <option value="Other">Other</option>
+        <div class="entry-row">
+          <select id="accTypeSelect">
+            <option>Albergue</option>
+            <option>Hotel</option>
           </select>
 
-          <input id="accommodationAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
+          <input id="accAmountInput" placeholder="0.00" />
 
-          <button type="button" id="addAccommodationBtn" class="primary-btn">Add Entry</button>
+          <button id="addAccBtn">Add Entry</button>
         </div>
 
         <div class="action-row">
-          <button type="button" id="cancelAccommodationEditBtn" class="primary-btn hidden">Cancel Edit</button>
+          <button id="cancelAccEditBtn" class="hidden">Cancel Edit</button>
         </div>
 
-        <div class="field-block note-block">
-          <label for="accommodationNoteInput">Note (optional):</label>
-          <input id="accommodationNoteInput" type="text" maxlength="120" placeholder="Optional note" />
-        </div>
-
-        <div class="entries-section">
-          <div class="entries-heading">Accommodation Entries:</div>
-          <div id="accommodationEntriesList" class="entries-list"></div>
-        </div>
+        <div id="accEntriesList"></div>
       </section>
-    </main>
-  </div>
 
-  <div id="appModalOverlay" class="modal-overlay hidden" aria-hidden="true">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="appModalTitle">
-      <div class="modal-header">
-        <div id="appModalTitle" class="modal-title">Trip Budget Tracker</div>
-      </div>
-      <div id="appModalBody" class="modal-body"></div>
-      <div class="modal-actions">
-        <button type="button" id="appModalCancel" class="modal-btn secondary-btn hidden">Cancel</button>
-        <button type="button" id="appModalOk" class="modal-btn primary-btn">OK</button>
-      </div>
-    </div>
+    </main>
   </div>
 
   <script src="js/app.js"></script>
