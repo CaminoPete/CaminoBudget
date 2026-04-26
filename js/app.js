@@ -62,7 +62,8 @@
     modalTitle: document.getElementById("appModalTitle"),
     modalBody: document.getElementById("appModalBody"),
     modalOk: document.getElementById("appModalOk"),
-    modalCancel: document.getElementById("appModalCancel")
+    modalCancel: document.getElementById("appModalCancel"),
+    clearAllBtn: document.getElementById("clearAllBtn")
   };
 
   const layoutEls = {
@@ -169,6 +170,15 @@
         closeModal(false);
       }
     });
+
+    els.clearAllBtn.addEventListener("click", async function () {
+      const confirmed = await showConfirm(
+        "This will delete ALL data including budgets and entries.\n\nAre you sure?"
+      );
+      if (!confirmed) return;
+      clearAllData();
+    });
+
   }
 
   function bindCurrencyInput(inputEl, onValueCommit) {
@@ -908,6 +918,24 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function clearAllData() {
+    localStorage.removeItem(STORAGE_KEY);
+
+    appState.currency = "EUR";
+    appState.numberOfDays = 40;
+    appState.dayNumber = "D1";
+    appState.foodBudget = 1500;
+    appState.accommodationBudget = 900;
+    appState.foodEntries = [];
+    appState.accommodationEntries = [];
+
+    currentEditFoodId = null;
+    currentEditAccommodationId = null;
+
+    syncInputsFromState();
+    renderAll();
   }
 
   function saveState() {
