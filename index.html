@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #30 Mar 24, 2026 12:30 PM -->
+  <!-- Version #31 Apr 26, 2026 10:55 AM -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trip Budget Tracker</title>
@@ -11,7 +11,7 @@
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v30</div>
+      <div class="version-tag">v31</div>
     </header>
 
     <main class="app-main">
@@ -61,7 +61,10 @@
 
           <div class="summary-card food-card">
             <div class="summary-label">Remaining Food Budget:</div>
-            <div class="summary-value" id="foodRemainingBudget">€0.00</div>
+            <div class="summary-value remaining-with-status">
+              <span id="foodRemainingBudget">€0.00</span>
+              <span id="foodBudgetStatus" class="budget-status">+€0.00</span>
+            </div>
           </div>
 
           <div class="summary-card food-card">
@@ -102,18 +105,6 @@
           <input id="foodNoteInput" type="text" maxlength="120" placeholder="Optional note" />
         </div>
 
-        <div class="quick-amounts-wrap">
-          <div class="quick-label">Quick Amounts:</div>
-          <div class="quick-buttons">
-            <button type="button" class="quick-amount-btn" data-target="foodAmountInput" data-value="2">2</button>
-            <button type="button" class="quick-amount-btn" data-target="foodAmountInput" data-value="5">5</button>
-            <button type="button" class="quick-amount-btn" data-target="foodAmountInput" data-value="10">10</button>
-            <button type="button" class="quick-amount-btn" data-target="foodAmountInput" data-value="15">15</button>
-            <button type="button" class="quick-amount-btn" data-target="foodAmountInput" data-value="20">20</button>
-            <button type="button" class="quick-clear-btn" data-target="foodAmountInput">Clear</button>
-          </div>
-        </div>
-
         <div class="entries-section">
           <div class="entries-heading">Food Entries:</div>
           <div id="foodEntriesList" class="entries-list"></div>
@@ -139,7 +130,10 @@
 
           <div class="summary-card accommodation-card">
             <div class="summary-label">Remaining Accommodation Budget:</div>
-            <div class="summary-value" id="accommodationRemainingBudget">€0.00</div>
+            <div class="summary-value remaining-with-status">
+              <span id="accommodationRemainingBudget">€0.00</span>
+              <span id="accommodationBudgetStatus" class="budget-status">+€0.00</span>
+            </div>
           </div>
 
           <div class="summary-card accommodation-card">
