@@ -1,4 +1,4 @@
-// Version #32 Apr 26, 2026 10:45 AM
+// Version #33 Apr 26, 2026 11:05 AM
 
 (function () {
   "use strict";
@@ -241,7 +241,7 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent);
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.foodEntries);
 
     els.foodStartingDaily.textContent = formatCurrency(startingDaily);
     els.foodRemainingBudget.textContent = formatCurrency(remainingBudget);
@@ -257,7 +257,7 @@
     const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent);
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.accommodationEntries);
 
     els.accommodationStartingDaily.textContent = formatCurrency(startingDaily);
     els.accommodationRemainingBudget.textContent = formatCurrency(remainingBudget);
@@ -688,23 +688,28 @@
     }
   }
 
-  function calculateBudgetStatus(totalBudget, totalSpent) {
-    const dailyBudget = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
-    const currentDayNumber = getCurrentNumericDayNumber();
-    const expectedSpendSoFar = dailyBudget * currentDayNumber;
-
-    return expectedSpendSoFar - totalSpent;
-  }
-
-  function getCurrentNumericDayNumber() {
-    const clean = sanitizeDayNumber(appState.dayNumber);
-    const match = clean.match(/^D(\d{1,3})$/);
-
-    if (!match) {
-      return 1;
+  function calculateBudgetStatus(totalBudget, totalSpent, entries) {
+    if (!Array.isArray(entries) || entries.length === 0) {
+      return 0;
     }
 
-    return Math.max(1, parseInt(match[1], 10) || 1);
+    const dailyBudget = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const uniqueEntryDays = countUniqueEntryDays(entries);
+    const expectedSpendForEnteredDays = dailyBudget * uniqueEntryDays;
+
+    return expectedSpendForEnteredDays - totalSpent;
+  }
+
+  function countUniqueEntryDays(entries) {
+    const days = new Set();
+
+    entries.forEach(function (entry) {
+      if (entry && entry.dayNumber) {
+        days.add(sanitizeDayNumber(entry.dayNumber));
+      }
+    });
+
+    return days.size;
   }
 
   function setBudgetStatus(element, amount) {
