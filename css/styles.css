@@ -1,4 +1,4 @@
-/* Version #33 Apr 26, 2026 10:20 AM */
+/* Version #30 Mar 24, 2026 12:30 PM */
 
 :root {
   --bg: #efefef;
@@ -22,8 +22,6 @@
   --edit-outline: #2d6cdf;
   --edit-fill: #edf4ff;
   --soft-dark: #555;
-  --status-good: #1f6b35;
-  --status-bad: #9f2d2d;
 }
 
 * {
@@ -86,7 +84,7 @@ body {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: minmax(120px, 1.05fr) minmax(95px, 0.7fr) minmax(150px, 1.1fr);
+  grid-template-columns: minmax(120px, 1.2fr) minmax(85px, 0.65fr) minmax(145px, 1fr);
   gap: 10px;
   align-items: end;
 }
@@ -139,6 +137,8 @@ select {
 .arrow-btn,
 .primary-btn,
 .secondary-btn,
+.quick-amount-btn,
+.quick-clear-btn,
 .small-action-btn,
 .modal-btn {
   min-height: 42px;
@@ -150,6 +150,8 @@ select {
 }
 
 .arrow-btn,
+.quick-amount-btn,
+.quick-clear-btn,
 .small-action-btn,
 .secondary-btn {
   background: #f2f2f2;
@@ -246,23 +248,6 @@ select {
   line-height: 1.2;
 }
 
-.remaining-with-status {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.budget-status {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--status-good);
-}
-
-.budget-status.over-budget {
-  color: var(--status-bad);
-}
-
 .entry-title {
   margin: 10px 0 6px;
   font-size: 1rem;
@@ -292,19 +277,35 @@ select {
 .action-row {
   max-width: 560px;
   margin-bottom: 10px;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.action-row .primary-btn {
-  width: auto;
-  min-width: 130px;
 }
 
 .note-block {
   margin-bottom: 10px;
   max-width: 560px;
+}
+
+.quick-amounts-wrap {
+  margin-bottom: 12px;
+  max-width: 560px;
+}
+
+.quick-label {
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #444;
+}
+
+.quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-amount-btn,
+.quick-clear-btn {
+  min-width: 64px;
+  min-height: 40px;
 }
 
 .entries-section {
@@ -322,11 +323,6 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 260px;
-  min-height: 120px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-right: 4px;
 }
 
 .empty-state {
@@ -457,14 +453,6 @@ select {
 }
 
 @media (max-width: 620px) {
-  .settings-grid {
-    grid-template-columns: minmax(130px, 1fr) minmax(95px, 0.7fr);
-  }
-
-  .day-number-block {
-    grid-column: 1 / -1;
-  }
-
   .food-entry-row,
   .accommodation-entry-row {
     grid-template-columns: 1fr;
@@ -473,11 +461,6 @@ select {
   .primary-btn {
     width: 100%;
   }
-
-  .action-row .primary-btn {
-    width: auto;
-    flex: 1;
-  }
 }
 
 @media (max-width: 430px) {
@@ -485,10 +468,15 @@ select {
     max-width: 100%;
   }
 
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
   .summary-grid,
   .entry-row,
   .action-row,
   .note-block,
+  .quick-amounts-wrap,
   .entries-section,
   .compact-field {
     max-width: 100%;
