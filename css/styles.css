@@ -498,3 +498,22 @@ select {
     max-width: 100%;
   }
 }
+
+
+.reset-section {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.danger-btn {
+  background: #b3261e;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.danger-btn:hover {
+  background: #8f1f18;
+}
