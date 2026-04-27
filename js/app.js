@@ -1,4 +1,4 @@
-// Version #33 Apr 26, 2026 11:05 AM
+// Version #36 Apr 27, 2026
 
 (function () {
   "use strict";
@@ -84,6 +84,7 @@
     bindEvents();
     syncInputsFromState();
     renderAll();
+    registerServiceWorker();
   }
 
   function bindEvents() {
@@ -1019,5 +1020,17 @@
       modalResolver = null;
       resolver(Boolean(result));
     }
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("./sw.js").catch(function (error) {
+        console.error("Offline support could not be enabled.", error);
+      });
+    });
   }
 })();
