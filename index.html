@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #36 Apr 27, 2026 -->
+  <!-- Version #37 Apr 28, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=36" />
+  <link rel="stylesheet" href="css/styles.css?v=37" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v36</div>
+      <div class="version-tag">v37</div>
     </header>
 
     <main class="app-main">
@@ -30,12 +30,18 @@
           </div>
 
           <div class="field-block days-block">
-            <label for="daysInput">Number of Days:</label>
+            <label for="daysInput">
+              <span class="label-full">Number of Days:</span>
+              <span class="label-compact"># Days:</span>
+            </label>
             <input id="daysInput" type="number" min="1" step="1" value="40" />
           </div>
 
           <div class="field-block day-number-block">
-            <label for="dayNumberInput">Day Number</label>
+            <label for="dayNumberInput">
+              <span class="label-full">Day Number</span>
+              <span class="label-compact">Day #</span>
+            </label>
             <div class="day-stepper-row">
               <button type="button" id="prevDayBtn" class="arrow-btn" aria-label="Previous Day">◀</button>
               <input id="dayNumberInput" type="text" value="D1" maxlength="4" />
@@ -203,6 +209,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=36"></script>
+  <script src="js/app.js?v=37"></script>
 </body>
 </html>

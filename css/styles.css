@@ -1,4 +1,4 @@
-/* Version #36 Apr 27, 2026 */
+/* Version #37 Apr 28, 2026 */
 
 :root {
   --bg: #efefef;
@@ -101,6 +101,10 @@ body {
 label {
   font-size: 0.98rem;
   font-weight: 700;
+}
+
+.label-compact {
+  display: none;
 }
 
 input,
@@ -485,8 +489,61 @@ select {
     max-width: 100%;
   }
 
+  .settings-panel {
+    padding: 10px;
+  }
+
   .settings-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(130px, 1.2fr) minmax(58px, 0.5fr) minmax(118px, 1fr);
+    gap: 6px;
+    align-items: end;
+  }
+
+  .settings-grid .field-block {
+    gap: 4px;
+  }
+
+  .settings-grid label {
+    font-size: 0.74rem;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .settings-grid input,
+  .settings-grid select {
+    min-height: 40px;
+    border-radius: 9px;
+    padding: 8px;
+    font-size: 0.92rem;
+  }
+
+  .settings-grid select {
+    padding-right: 6px;
+  }
+
+  .label-full {
+    display: none;
+  }
+
+  .label-compact {
+    display: inline;
+  }
+
+  .day-stepper-row {
+    grid-template-columns: 32px minmax(42px, 1fr) 32px;
+    gap: 4px;
+  }
+
+  .day-stepper-row .arrow-btn {
+    min-height: 40px;
+    border-radius: 9px;
+    font-size: 0.82rem;
+  }
+
+  #dayNumberInput {
+    font-size: 0.94rem;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 
   .summary-grid,
