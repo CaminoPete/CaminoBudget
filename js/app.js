@@ -1,4 +1,4 @@
-// Version #37 Apr 28, 2026
+// Version #38 Apr 28, 2026
 
 (function () {
   "use strict";
@@ -63,7 +63,8 @@
     modalBody: document.getElementById("appModalBody"),
     modalOk: document.getElementById("appModalOk"),
     modalCancel: document.getElementById("appModalCancel"),
-    clearAllBtn: document.getElementById("clearAllBtn")
+    clearFoodBtn: document.getElementById("clearFoodBtn"),
+    clearAccommodationBtn: document.getElementById("clearAccommodationBtn")
   };
 
   const layoutEls = {
@@ -172,12 +173,34 @@
       }
     });
 
-    els.clearAllBtn.addEventListener("click", async function () {
+    els.clearFoodBtn.addEventListener("click", async function () {
+      if (!appState.foodEntries.length) {
+        await showInfo("There are no Food entries to clear.");
+        return;
+      }
+
       const confirmed = await showConfirm(
-        "This will delete ALL data including budgets and entries.\n\nAre you sure?"
+        "Clear all Food entries?\n\nThis cannot be undone. Your Food budget will stay the same."
       );
       if (!confirmed) return;
-      clearAllData();
+
+      clearFoodEntries();
+      await showInfo("Food entries cleared.");
+    });
+
+    els.clearAccommodationBtn.addEventListener("click", async function () {
+      if (!appState.accommodationEntries.length) {
+        await showInfo("There are no Accommodation entries to clear.");
+        return;
+      }
+
+      const confirmed = await showConfirm(
+        "Clear all Accommodation entries?\n\nThis cannot be undone. Your Accommodation budget will stay the same."
+      );
+      if (!confirmed) return;
+
+      clearAccommodationEntries();
+      await showInfo("Accommodation entries cleared.");
     });
 
   }
@@ -887,6 +910,10 @@
       return "€" + num.toFixed(2);
     }
 
+    if (appState.currency === "GBP") {
+      return "£" + num.toFixed(2);
+    }
+
     if (appState.currency === "CAD") {
       return "$" + num.toFixed(2);
     }
@@ -921,20 +948,24 @@
       .replace(/'/g, "&#39;");
   }
 
-  function clearAllData() {
-    localStorage.removeItem(STORAGE_KEY);
-
-    appState.currency = "EUR";
-    appState.numberOfDays = 40;
-    appState.dayNumber = "D1";
-    appState.foodBudget = 1500;
-    appState.accommodationBudget = 900;
+  function clearFoodEntries() {
     appState.foodEntries = [];
-    appState.accommodationEntries = [];
 
     currentEditFoodId = null;
+
+    clearFoodEntryInputs();
+    saveState();
+    syncInputsFromState();
+    renderAll();
+  }
+
+  function clearAccommodationEntries() {
+    appState.accommodationEntries = [];
+
     currentEditAccommodationId = null;
 
+    clearAccommodationEntryInputs();
+    saveState();
     syncInputsFromState();
     renderAll();
   }

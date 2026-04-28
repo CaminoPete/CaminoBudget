@@ -1,4 +1,4 @@
-/* Version #37 Apr 28, 2026 */
+/* Version #38 Apr 28, 2026 */
 
 :root {
   --bg: #efefef;
@@ -559,7 +559,10 @@ select {
 
 .reset-section {
   margin-top: 16px;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .danger-btn {
@@ -569,8 +572,23 @@ select {
   padding: 10px 16px;
   border-radius: 10px;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .danger-btn:hover {
   background: #8f1f18;
+}
+
+@media (max-width: 430px) {
+  .reset-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .danger-btn {
+    width: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
 }

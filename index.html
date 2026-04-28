@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #37 Apr 28, 2026 -->
+  <!-- Version #38 Apr 28, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=37" />
+  <link rel="stylesheet" href="css/styles.css?v=38" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v37</div>
+      <div class="version-tag">v38</div>
     </header>
 
     <main class="app-main">
@@ -24,6 +24,7 @@
             <label for="currencySelect">Currency:</label>
             <select id="currencySelect">
               <option value="EUR">Euros (€)</option>
+              <option value="GBP">UK Pounds (£)</option>
               <option value="CAD">Canadian Dollars ($)</option>
               <option value="USD">USA Dollars (US$)</option>
             </select>
@@ -190,7 +191,8 @@
       </section>
     
       <div class="reset-section">
-        <button id="clearAllBtn" class="danger-btn">Clear All Data</button>
+        <button id="clearFoodBtn" class="danger-btn">Clear Food</button>
+        <button id="clearAccommodationBtn" class="danger-btn">Clear Accommodation</button>
       </div>
 
     </main>
@@ -209,6 +211,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=37"></script>
+  <script src="js/app.js?v=38"></script>
 </body>
 </html>
