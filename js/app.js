@@ -1,4 +1,4 @@
-// Version #41 May 3, 2026
+// Version #42 May 3, 2026
 
 (function () {
   "use strict";
@@ -89,6 +89,8 @@
   let modalResolver = null;
   let currentEditFoodId = null;
   let currentEditAccommodationId = null;
+  let pendingUpdateWorker = null;
+  let refreshingForUpdate = false;
 
   init();
 
@@ -1352,10 +1354,16 @@
       return;
     }
 
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (refreshingForUpdate) {
+        window.location.reload();
+      }
+    });
+
     window.addEventListener("load", function () {
       navigator.serviceWorker.register("./sw.js").then(function (registration) {
         if (registration.waiting) {
-          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          showUpdateButton(registration.waiting);
         }
 
         registration.addEventListener("updatefound", function () {
@@ -1367,14 +1375,28 @@
 
           newWorker.addEventListener("statechange", function () {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              newWorker.postMessage({ type: "SKIP_WAITING" });
+              showUpdateButton(newWorker);
             }
           });
         });
+
+        registration.update();
       }).catch(function (error) {
         console.error("Offline support could not be enabled.", error);
       });
     });
+  }
+
+  function showUpdateButton(worker) {
+    pendingUpdateWorker = worker;
+    els.updateAppBtn.disabled = false;
+    els.updateAppBtn.classList.remove("hidden");
+  }
+
+  function hideUpdateButton() {
+    pendingUpdateWorker = null;
+    els.updateAppBtn.disabled = true;
+    els.updateAppBtn.classList.add("hidden");
   }
 
   async function updateAppCache() {
@@ -1390,8 +1412,16 @@
         if (registration) {
           await registration.update();
 
-          if (registration.waiting) {
-            registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          const updateWorker = pendingUpdateWorker || registration.waiting;
+
+          if (updateWorker) {
+            refreshingForUpdate = true;
+            hideUpdateButton();
+            updateWorker.postMessage({ type: "SKIP_WAITING" });
+            setTimeout(function () {
+              window.location.reload();
+            }, 1200);
+            return;
           }
         }
       }
