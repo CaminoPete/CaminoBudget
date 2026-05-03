@@ -1,4 +1,4 @@
-/* Version #38 Apr 28, 2026 */
+/* Version #39 May 3, 2026 */
 
 :root {
   --bg: #efefef;
@@ -74,8 +74,19 @@ body {
   text-align: center;
 }
 
+.trip-name-tag {
+  margin-top: 4px;
+  color: var(--blue);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+}
+
 .settings-panel,
-.budget-panel {
+.budget-panel,
+.trip-panel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
@@ -579,6 +590,37 @@ select {
   background: #8f1f18;
 }
 
+.trip-panel {
+  margin-top: 12px;
+}
+
+.trip-tools-title {
+  margin: 0 0 10px;
+  color: var(--blue);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.trip-management-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.trip-button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.trip-button-row .primary-btn,
+.trip-button-row .secondary-btn,
+.trip-button-row .danger-btn {
+  width: 100%;
+}
+
 @media (max-width: 430px) {
   .reset-section {
     display: grid;
@@ -590,5 +632,10 @@ select {
     width: 100%;
     padding-left: 10px;
     padding-right: 10px;
+  }
+
+  .trip-management-grid,
+  .trip-button-row {
+    grid-template-columns: 1fr;
   }
 }

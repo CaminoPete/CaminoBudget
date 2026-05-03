@@ -1,20 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #38 Apr 28, 2026 -->
+  <!-- Version #39 May 3, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=38" />
+  <link rel="stylesheet" href="css/styles.css?v=39" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v38</div>
+      <div class="version-tag">v39</div>
+      <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
     </header>
 
     <main class="app-main">
@@ -195,6 +196,28 @@
         <button id="clearAccommodationBtn" class="danger-btn">Clear Accommodation</button>
       </div>
 
+      <section class="trip-panel" aria-labelledby="tripToolsHeading">
+        <h2 id="tripToolsHeading" class="trip-tools-title">Trips</h2>
+
+        <div class="trip-management-grid">
+          <div class="field-block">
+            <label for="tripSelect">Current Trip:</label>
+            <select id="tripSelect"></select>
+          </div>
+
+          <div class="field-block">
+            <label for="tripNameInput">Trip Name:</label>
+            <input id="tripNameInput" type="text" maxlength="48" placeholder="Trip name" />
+          </div>
+        </div>
+
+        <div class="trip-button-row">
+          <button type="button" id="addTripBtn" class="primary-btn">Add Trip</button>
+          <button type="button" id="renameTripBtn" class="secondary-btn">Rename Trip</button>
+          <button type="button" id="deleteTripBtn" class="danger-btn">Delete Trip</button>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -211,6 +234,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=38"></script>
+  <script src="js/app.js?v=39"></script>
 </body>
 </html>

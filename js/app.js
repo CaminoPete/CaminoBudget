@@ -1,21 +1,26 @@
-// Version #38 Apr 28, 2026
+// Version #39 May 3, 2026
 
 (function () {
   "use strict";
 
   const STORAGE_KEY = "tripBudgetTrackerData_v25";
+  const DEFAULT_TRIP_NAME = "Camino 2026";
 
   const appState = {
+    activeTripId: "",
+    tripName: DEFAULT_TRIP_NAME,
     currency: "EUR",
     numberOfDays: 40,
     dayNumber: "D1",
     foodBudget: 1500,
     accommodationBudget: 900,
     foodEntries: [],
-    accommodationEntries: []
+    accommodationEntries: [],
+    trips: []
   };
 
   const els = {
+    tripNameDisplay: document.getElementById("tripNameDisplay"),
     currencySelect: document.getElementById("currencySelect"),
     daysInput: document.getElementById("daysInput"),
     dayNumberInput: document.getElementById("dayNumberInput"),
@@ -64,7 +69,12 @@
     modalOk: document.getElementById("appModalOk"),
     modalCancel: document.getElementById("appModalCancel"),
     clearFoodBtn: document.getElementById("clearFoodBtn"),
-    clearAccommodationBtn: document.getElementById("clearAccommodationBtn")
+    clearAccommodationBtn: document.getElementById("clearAccommodationBtn"),
+    tripSelect: document.getElementById("tripSelect"),
+    tripNameInput: document.getElementById("tripNameInput"),
+    addTripBtn: document.getElementById("addTripBtn"),
+    renameTripBtn: document.getElementById("renameTripBtn"),
+    deleteTripBtn: document.getElementById("deleteTripBtn")
   };
 
   const layoutEls = {
@@ -82,6 +92,8 @@
 
   function init() {
     loadState();
+    ensureTripState();
+    saveState();
     bindEvents();
     syncInputsFromState();
     renderAll();
@@ -203,6 +215,22 @@
       await showInfo("Accommodation entries cleared.");
     });
 
+    els.tripSelect.addEventListener("change", function () {
+      switchTrip(els.tripSelect.value);
+    });
+
+    els.addTripBtn.addEventListener("click", async function () {
+      await addTrip();
+    });
+
+    els.renameTripBtn.addEventListener("click", async function () {
+      await renameTrip();
+    });
+
+    els.deleteTripBtn.addEventListener("click", async function () {
+      await deleteCurrentTrip();
+    });
+
   }
 
   function bindCurrencyInput(inputEl, onValueCommit) {
@@ -221,11 +249,13 @@
   }
 
   function syncInputsFromState() {
+    els.tripNameDisplay.textContent = appState.tripName;
     els.currencySelect.value = appState.currency;
     els.daysInput.value = appState.numberOfDays;
     els.dayNumberInput.value = appState.dayNumber;
     els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
     els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
+    els.tripNameInput.value = appState.tripName;
   }
 
   function formatAllCurrencyInputs() {
@@ -265,7 +295,24 @@
     renderAccommodationSummary();
     renderFoodEntries();
     renderAccommodationEntries();
+    renderTripControls();
     updateFormButtonStates();
+  }
+
+  function renderTripControls() {
+    const currentValue = els.tripSelect.value || appState.activeTripId;
+
+    els.tripSelect.innerHTML = "";
+
+    appState.trips.forEach(function (trip) {
+      const option = document.createElement("option");
+      option.value = trip.id;
+      option.textContent = trip.name || DEFAULT_TRIP_NAME;
+      els.tripSelect.appendChild(option);
+    });
+
+    els.tripSelect.value = appState.activeTripId || currentValue;
+    els.deleteTripBtn.disabled = appState.trips.length <= 1;
   }
 
   function renderFoodSummary() {
@@ -948,6 +995,243 @@
       .replace(/'/g, "&#39;");
   }
 
+  function ensureTripState() {
+    if (!Array.isArray(appState.trips) || appState.trips.length === 0) {
+      const tripId = appState.activeTripId || createId();
+      appState.activeTripId = tripId;
+      appState.tripName = sanitizeTripName(appState.tripName) || DEFAULT_TRIP_NAME;
+      appState.trips = [buildTripFromState(tripId, appState.tripName)];
+      return;
+    }
+
+    appState.trips = appState.trips.map(function (trip, index) {
+      return normalizeTrip(trip, "Trip " + (index + 1));
+    });
+
+    const activeTrip = findActiveTrip() || appState.trips[0];
+    applyTripToState(activeTrip);
+  }
+
+  function buildTripFromState(id, name) {
+    return {
+      id: id || createId(),
+      name: sanitizeTripName(name) || DEFAULT_TRIP_NAME,
+      currency: appState.currency || "EUR",
+      numberOfDays: Number.isFinite(appState.numberOfDays) ? appState.numberOfDays : 40,
+      dayNumber: sanitizeDayNumber(appState.dayNumber),
+      foodBudget: sanitiseMoney(appState.foodBudget),
+      accommodationBudget: sanitiseMoney(appState.accommodationBudget),
+      foodEntries: cloneEntries(appState.foodEntries),
+      accommodationEntries: cloneEntries(appState.accommodationEntries)
+    };
+  }
+
+  function createBlankTrip(name) {
+    return {
+      id: createId(),
+      name: sanitizeTripName(name) || getNextTripName(),
+      currency: appState.currency || "EUR",
+      numberOfDays: Number.isFinite(appState.numberOfDays) ? appState.numberOfDays : 40,
+      dayNumber: "D1",
+      foodBudget: 0,
+      accommodationBudget: 0,
+      foodEntries: [],
+      accommodationEntries: []
+    };
+  }
+
+  function normalizeTrip(trip, fallbackName) {
+    const cleanTrip = trip && typeof trip === "object" ? trip : {};
+
+    return {
+      id: cleanTrip.id || createId(),
+      name: sanitizeTripName(cleanTrip.name) || fallbackName || DEFAULT_TRIP_NAME,
+      currency: cleanTrip.currency || "EUR",
+      numberOfDays: Number.isFinite(cleanTrip.numberOfDays) ? cleanTrip.numberOfDays : 40,
+      dayNumber: sanitizeDayNumber(cleanTrip.dayNumber || "D1"),
+      foodBudget: sanitiseMoney(cleanTrip.foodBudget),
+      accommodationBudget: sanitiseMoney(cleanTrip.accommodationBudget),
+      foodEntries: Array.isArray(cleanTrip.foodEntries) ? cloneEntries(cleanTrip.foodEntries) : [],
+      accommodationEntries: Array.isArray(cleanTrip.accommodationEntries) ? cloneEntries(cleanTrip.accommodationEntries) : []
+    };
+  }
+
+  function findActiveTrip() {
+    return appState.trips.find(function (trip) {
+      return trip.id === appState.activeTripId;
+    });
+  }
+
+  function applyTripToState(trip) {
+    appState.activeTripId = trip.id;
+    appState.tripName = sanitizeTripName(trip.name) || DEFAULT_TRIP_NAME;
+    appState.currency = trip.currency || "EUR";
+    appState.numberOfDays = Number.isFinite(trip.numberOfDays) ? trip.numberOfDays : 40;
+    appState.dayNumber = sanitizeDayNumber(trip.dayNumber || "D1");
+    appState.foodBudget = sanitiseMoney(trip.foodBudget);
+    appState.accommodationBudget = sanitiseMoney(trip.accommodationBudget);
+    appState.foodEntries = Array.isArray(trip.foodEntries) ? cloneEntries(trip.foodEntries) : [];
+    appState.accommodationEntries = Array.isArray(trip.accommodationEntries) ? cloneEntries(trip.accommodationEntries) : [];
+  }
+
+  function updateActiveTripFromState() {
+    const activeTrip = findActiveTrip();
+
+    if (!activeTrip) {
+      return;
+    }
+
+    const updatedTrip = buildTripFromState(appState.activeTripId, appState.tripName);
+
+    Object.keys(updatedTrip).forEach(function (key) {
+      activeTrip[key] = updatedTrip[key];
+    });
+  }
+
+  function cloneEntries(entries) {
+    return entries.map(function (entry) {
+      return Object.assign({}, entry);
+    });
+  }
+
+  function sanitizeTripName(name) {
+    return String(name || "").trim().replace(/\s+/g, " ").slice(0, 48);
+  }
+
+  function getNextTripName() {
+    let index = appState.trips.length + 1;
+    let name = "Trip " + index;
+
+    while (appState.trips.some(function (trip) { return trip.name === name; })) {
+      index += 1;
+      name = "Trip " + index;
+    }
+
+    return name;
+  }
+
+  function switchTrip(tripId) {
+    if (!tripId || tripId === appState.activeTripId) {
+      return;
+    }
+
+    updateActiveTripFromState();
+
+    const nextTrip = appState.trips.find(function (trip) {
+      return trip.id === tripId;
+    });
+
+    if (!nextTrip) {
+      renderTripControls();
+      return;
+    }
+
+    cancelFoodEdit(false);
+    cancelAccommodationEdit(false);
+    clearFoodEntryInputs();
+    clearAccommodationEntryInputs();
+    applyTripToState(nextTrip);
+    saveState();
+    syncInputsFromState();
+    renderAll();
+  }
+
+  async function addTrip() {
+    updateActiveTripFromState();
+
+    const requestedName = sanitizeTripName(els.tripNameInput.value);
+    const activeName = sanitizeTripName(appState.tripName);
+    const tripName = requestedName && requestedName !== activeName ? requestedName : getNextTripName();
+
+    if (isTripNameTaken(tripName)) {
+      await showInfo("A trip with that name already exists.");
+      return;
+    }
+
+    const newTrip = createBlankTrip(tripName);
+
+    appState.trips.push(newTrip);
+    cancelFoodEdit(false);
+    cancelAccommodationEdit(false);
+    clearFoodEntryInputs();
+    clearAccommodationEntryInputs();
+    applyTripToState(newTrip);
+    saveState();
+    syncInputsFromState();
+    renderAll();
+    await showInfo("Trip added: " + newTrip.name);
+  }
+
+  async function renameTrip() {
+    const activeTrip = findActiveTrip();
+    const requestedName = sanitizeTripName(els.tripNameInput.value);
+
+    if (!activeTrip) {
+      await showInfo("The current trip could not be found.");
+      return;
+    }
+
+    if (!requestedName) {
+      await showInfo("Please enter a trip name.");
+      return;
+    }
+
+    if (isTripNameTaken(requestedName, activeTrip.id)) {
+      await showInfo("A trip with that name already exists.");
+      return;
+    }
+
+    appState.tripName = requestedName;
+    activeTrip.name = requestedName;
+    saveState();
+    syncInputsFromState();
+    renderAll();
+    await showInfo("Trip renamed.");
+  }
+
+  function isTripNameTaken(name, excludedTripId) {
+    return appState.trips.some(function (trip) {
+      return trip.id !== excludedTripId && trip.name.toLowerCase() === name.toLowerCase();
+    });
+  }
+
+  async function deleteCurrentTrip() {
+    const activeTrip = findActiveTrip();
+
+    if (!activeTrip) {
+      await showInfo("The current trip could not be found.");
+      return;
+    }
+
+    if (appState.trips.length <= 1) {
+      await showInfo("You need at least one trip.");
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      "Delete trip \"" + activeTrip.name + "\"?\n\n" +
+      "This will delete its budgets, Food entries, and Accommodation entries. This cannot be undone."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    appState.trips = appState.trips.filter(function (trip) {
+      return trip.id !== activeTrip.id;
+    });
+
+    cancelFoodEdit(false);
+    cancelAccommodationEdit(false);
+    clearFoodEntryInputs();
+    clearAccommodationEntryInputs();
+    applyTripToState(appState.trips[0]);
+    saveState();
+    syncInputsFromState();
+    renderAll();
+    await showInfo("Trip deleted.");
+  }
+
   function clearFoodEntries() {
     appState.foodEntries = [];
 
@@ -971,6 +1255,7 @@
   }
 
   function saveState() {
+    updateActiveTripFromState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   }
 
@@ -984,6 +1269,8 @@
 
       const parsed = JSON.parse(raw);
 
+      appState.activeTripId = parsed.activeTripId || appState.activeTripId;
+      appState.tripName = sanitizeTripName(parsed.tripName) || appState.tripName;
       appState.currency = parsed.currency || appState.currency;
       appState.numberOfDays = Number.isFinite(parsed.numberOfDays) ? parsed.numberOfDays : appState.numberOfDays;
       appState.dayNumber = parsed.dayNumber || appState.dayNumber;
@@ -991,6 +1278,7 @@
       appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
       appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
       appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
+      appState.trips = Array.isArray(parsed.trips) ? parsed.trips : [];
     } catch (error) {
       console.error("Could not load saved app data.", error);
     }
@@ -1054,7 +1342,7 @@
   }
 
   function registerServiceWorker() {
-    if (!("serviceWorker" in navigator)) {
+    if (!("serviceWorker" in navigator) || !/^https?:$/.test(window.location.protocol)) {
       return;
     }
 
