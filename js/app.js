@@ -1,9 +1,10 @@
-// Version #40 May 3, 2026
+// Version #41 May 3, 2026
 
 (function () {
   "use strict";
 
   const STORAGE_KEY = "tripBudgetTrackerData_v25";
+  const APP_CACHE_PREFIX = "trip-budget-tracker-";
   const DEFAULT_TRIP_NAME = "Camino 2026";
 
   const appState = {
@@ -21,6 +22,7 @@
 
   const els = {
     tripNameDisplay: document.getElementById("tripNameDisplay"),
+    updateAppBtn: document.getElementById("updateAppBtn"),
     currencySelect: document.getElementById("currencySelect"),
     daysInput: document.getElementById("daysInput"),
     dayNumberInput: document.getElementById("dayNumberInput"),
@@ -229,6 +231,10 @@
 
     els.deleteTripBtn.addEventListener("click", async function () {
       await deleteCurrentTrip();
+    });
+
+    els.updateAppBtn.addEventListener("click", async function () {
+      await updateAppCache();
     });
 
   }
@@ -1347,9 +1353,66 @@
     }
 
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("./sw.js").catch(function (error) {
+      navigator.serviceWorker.register("./sw.js").then(function (registration) {
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        }
+
+        registration.addEventListener("updatefound", function () {
+          const newWorker = registration.installing;
+
+          if (!newWorker) {
+            return;
+          }
+
+          newWorker.addEventListener("statechange", function () {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              newWorker.postMessage({ type: "SKIP_WAITING" });
+            }
+          });
+        });
+      }).catch(function (error) {
         console.error("Offline support could not be enabled.", error);
       });
     });
+  }
+
+  async function updateAppCache() {
+    if (!navigator.onLine) {
+      await showInfo("You are offline. Connect to the internet before updating the app.");
+      return;
+    }
+
+    try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+
+        if (registration) {
+          await registration.update();
+
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          }
+        }
+      }
+
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames
+            .filter(function (cacheName) {
+              return cacheName.indexOf(APP_CACHE_PREFIX) === 0;
+            })
+            .map(function (cacheName) {
+              return caches.delete(cacheName);
+            })
+        );
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error("App update failed.", error);
+      await showInfo("The app could not update right now. Please try again while online.");
+    }
   }
 })();

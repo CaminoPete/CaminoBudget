@@ -1,4 +1,4 @@
-/* Version #40 May 3, 2026 */
+/* Version #41 May 3, 2026 */
 
 :root {
   --bg: #efefef;
@@ -84,6 +84,23 @@ body {
   line-height: 1.2;
   text-align: center;
   word-break: break-word;
+}
+
+.update-app-btn {
+  margin-top: 8px;
+  min-height: 34px;
+  border: 1px solid #8fb8ee;
+  border-radius: 9px;
+  background: var(--blue-soft-btn);
+  color: var(--blue);
+  padding: 7px 12px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.update-app-btn:hover {
+  background: var(--blue-soft-btn-hover);
 }
 
 .settings-panel,
