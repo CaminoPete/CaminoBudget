@@ -1,4 +1,4 @@
-/* Version #39 May 3, 2026 */
+/* Version #40 May 3, 2026 */
 
 :root {
   --bg: #efefef;
@@ -8,6 +8,8 @@
   --blue: #0d3d78;
   --blue-btn: #1d63c9;
   --blue-btn-hover: #1552ac;
+  --blue-soft-btn: #dceaff;
+  --blue-soft-btn-hover: #c7dcff;
   --food-card-bg: #f3ebc9;
   --food-card-border: #d9ca85;
   --acc-card-bg: #e3f0ff;
@@ -169,10 +171,20 @@ select {
 .arrow-btn,
 .quick-amount-btn,
 .quick-clear-btn,
-.small-action-btn,
-.secondary-btn {
+.small-action-btn {
   background: #f2f2f2;
   color: var(--text);
+}
+
+.secondary-btn {
+  background: var(--blue-soft-btn);
+  color: var(--blue);
+  border-color: #8fb8ee;
+}
+
+.secondary-btn:hover {
+  background: var(--blue-soft-btn-hover);
+  border-color: #6fa2e4;
 }
 
 .arrow-btn {
