@@ -1,4 +1,4 @@
-/* Version #45 July 9, 2026 */
+/* Version #46 July 10, 2026 */
 
 :root {
   --bg: #efefef;
@@ -392,9 +392,12 @@ select {
 
 .food-entry-row,
 .accommodation-entry-row,
-.misc-entry-row,
-.funds-entry-row {
+.misc-entry-row {
   grid-template-columns: 1.6fr 0.72fr 0.95fr;
+}
+
+.funds-entry-row {
+  grid-template-columns: 1fr 1fr 0.9fr 0.85fr;
 }
 
 .two-field-grid {

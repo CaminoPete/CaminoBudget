@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #45 July 9, 2026 -->
+  <!-- Version #46 July 10, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=45" />
+  <link rel="stylesheet" href="css/styles.css?v=46" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v45</div>
+      <div class="version-tag">v46</div>
       <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
       <button type="button" id="updateAppBtn" class="update-app-btn hidden">Update App</button>
     </header>
@@ -292,20 +292,34 @@
             <div class="summary-value" id="fundBalance">&euro;0.00</div>
           </div>
         </div>
+      </section>
+
+      <section class="budget-panel transfer-panel">
+        <h2 class="section-title">
+          <span class="section-main">Transfer Funds</span>
+        </h2>
 
         <div class="entry-row funds-entry-row">
-          <div class="input-confirm-row">
-            <input id="fundTransferAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="Amount" />
-            <button type="button" id="confirmFundTransferAmountBtn" class="field-confirm-btn" aria-label="Done editing transfer amount">&#10003;</button>
-          </div>
-
-          <select id="fundTransferSelect">
+          <select id="fundTransferFromSelect">
+            <option value="Funds">Funds</option>
             <option value="Food">Food</option>
             <option value="Accommodation">Accommodation</option>
             <option value="Misc & Other">Misc &amp; Other</option>
           </select>
 
-          <button type="button" id="updateFundTransferBtn" class="primary-btn">Update</button>
+          <select id="fundTransferToSelect">
+            <option value="Food">Food</option>
+            <option value="Accommodation">Accommodation</option>
+            <option value="Misc & Other">Misc &amp; Other</option>
+            <option value="Funds">Funds</option>
+          </select>
+
+          <div class="input-confirm-row">
+            <input id="fundTransferAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="Amount" />
+            <button type="button" id="confirmFundTransferAmountBtn" class="field-confirm-btn" aria-label="Done editing transfer amount">&#10003;</button>
+          </div>
+
+          <button type="button" id="updateFundTransferBtn" class="primary-btn">Transfer</button>
         </div>
 
         <div class="entries-section">
@@ -361,6 +375,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=45"></script>
+  <script src="js/app.js?v=46"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Version #45 July 9, 2026
+// Version #46 July 10, 2026
 
 (function () {
   "use strict";
@@ -95,7 +95,8 @@
     fundBalance: document.getElementById("fundBalance"),
     fundTransferAmountInput: document.getElementById("fundTransferAmountInput"),
     confirmFundTransferAmountBtn: document.getElementById("confirmFundTransferAmountBtn"),
-    fundTransferSelect: document.getElementById("fundTransferSelect"),
+    fundTransferFromSelect: document.getElementById("fundTransferFromSelect"),
+    fundTransferToSelect: document.getElementById("fundTransferToSelect"),
     updateFundTransferBtn: document.getElementById("updateFundTransferBtn"),
     fundTransfersList: document.getElementById("fundTransfersList"),
 
@@ -638,11 +639,13 @@
     sorted.forEach(function (transfer) {
       const item = document.createElement("div");
       item.className = "entry-item";
+      const fromAccount = getTransferFromAccount(transfer);
+      const toAccount = getTransferToAccount(transfer);
 
       item.innerHTML = [
         '<div class="entry-top">',
         '<div class="entry-main">',
-        '<div class="entry-line-1">' + escapeHtml(transfer.destination) + "</div>",
+        '<div class="entry-line-1">' + escapeHtml(fromAccount) + " -> " + escapeHtml(toAccount) + "</div>",
         '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(transfer.createdAt)) + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(transfer.amount)) + "</div>",
@@ -854,16 +857,22 @@
 
   async function onUpdateFundTransfer() {
     const amount = sanitiseMoney(parseCurrencyInputValue(els.fundTransferAmountInput.value));
-    const destination = els.fundTransferSelect.value;
+    const fromAccount = els.fundTransferFromSelect.value;
+    const toAccount = els.fundTransferToSelect.value;
 
     if (amount <= 0) {
       await showInfo("Please enter a transfer amount greater than 0.");
       return;
     }
 
-    if (amount > calculateFundBalance()) {
+    if (fromAccount === toAccount) {
+      await showInfo("Please choose two different accounts for the transfer.");
+      return;
+    }
+
+    if (amount > getAccountBalance(fromAccount)) {
       const confirmed = await showConfirm(
-        "This transfer is greater than the current Fund balance.\n\nContinue anyway?"
+        "This transfer is greater than the current " + fromAccount + " balance.\n\nContinue anyway?"
       );
 
       if (!confirmed) {
@@ -871,11 +880,12 @@
       }
     }
 
-    applyFundTransferToBudget(destination, amount);
+    applyAccountTransfer(fromAccount, toAccount, amount);
 
     appState.fundTransfers.push({
       id: createId(),
-      destination: destination,
+      from: fromAccount,
+      to: toAccount,
       amount: amount,
       createdAt: new Date().toISOString()
     });
@@ -898,17 +908,18 @@
 
     const confirmed = await showConfirm(
       "Delete this Fund transfer?\n\n" +
-      "Transfer: " + transfer.destination + "\n" +
+      "From: " + getTransferFromAccount(transfer) + "\n" +
+      "To: " + getTransferToAccount(transfer) + "\n" +
       "Amount: " + formatCurrency(transfer.amount) + "\n" +
       "Date: " + formatEntryDate(transfer.createdAt) + "\n\n" +
-      "This will return the amount to the Fund balance and remove it from the selected budget."
+      "This will reverse the transfer."
     );
 
     if (!confirmed) {
       return;
     }
 
-    applyFundTransferToBudget(transfer.destination, -transfer.amount);
+    applyAccountTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount);
     appState.fundTransfers = appState.fundTransfers.filter(function (item) {
       return item.id !== id;
     });
@@ -918,14 +929,9 @@
     renderAll();
   }
 
-  function applyFundTransferToBudget(destination, amount) {
-    if (destination === "Food") {
-      appState.foodBudget = sanitiseBudget(appState.foodBudget + amount);
-    } else if (destination === "Accommodation") {
-      appState.accommodationBudget = sanitiseBudget(appState.accommodationBudget + amount);
-    } else {
-      appState.miscBudget = sanitiseBudget(appState.miscBudget + amount);
-    }
+  function applyAccountTransfer(fromAccount, toAccount, amount) {
+    setAccountBalance(fromAccount, getAccountBalance(fromAccount) - amount);
+    setAccountBalance(toAccount, getAccountBalance(toAccount) + amount);
   }
 
   function startEditFood(id) {
@@ -1300,7 +1306,45 @@
   }
 
   function calculateFundBalance() {
-    return (Number(appState.fundAmount) || 0) - sumEntries(appState.fundTransfers);
+    return Number(appState.fundAmount) || 0;
+  }
+
+  function getAccountBalance(accountName) {
+    if (accountName === "Funds") {
+      return Number(appState.fundAmount) || 0;
+    }
+
+    if (accountName === "Food") {
+      return Number(appState.foodBudget) || 0;
+    }
+
+    if (accountName === "Accommodation") {
+      return Number(appState.accommodationBudget) || 0;
+    }
+
+    return Number(appState.miscBudget) || 0;
+  }
+
+  function setAccountBalance(accountName, amount) {
+    const cleanAmount = sanitiseBudget(amount);
+
+    if (accountName === "Funds") {
+      appState.fundAmount = cleanAmount;
+    } else if (accountName === "Food") {
+      appState.foodBudget = cleanAmount;
+    } else if (accountName === "Accommodation") {
+      appState.accommodationBudget = cleanAmount;
+    } else {
+      appState.miscBudget = cleanAmount;
+    }
+  }
+
+  function getTransferFromAccount(transfer) {
+    return transfer && transfer.from ? transfer.from : "Funds";
+  }
+
+  function getTransferToAccount(transfer) {
+    return transfer && transfer.to ? transfer.to : (transfer && transfer.destination ? transfer.destination : "Food");
   }
 
   function sumEntries(entries) {
@@ -1493,7 +1537,7 @@
       foodEntries: cloneEntries(appState.foodEntries),
       accommodationEntries: cloneEntries(appState.accommodationEntries),
       miscEntries: cloneEntries(appState.miscEntries),
-      fundTransfers: cloneEntries(appState.fundTransfers)
+      fundTransfers: normalizeFundTransfers(appState.fundTransfers)
     };
   }
 
@@ -1517,6 +1561,8 @@
 
   function normalizeTrip(trip, fallbackName) {
     const cleanTrip = trip && typeof trip === "object" ? trip : {};
+    const cleanFundTransfers = normalizeFundTransfers(cleanTrip.fundTransfers);
+    const legacyFundTransferTotal = getLegacyFundTransferTotal(cleanTrip.fundTransfers);
 
     return {
       id: cleanTrip.id || createId(),
@@ -1527,11 +1573,11 @@
       foodBudget: sanitiseMoney(cleanTrip.foodBudget),
       accommodationBudget: sanitiseMoney(cleanTrip.accommodationBudget),
       miscBudget: sanitiseMoney(cleanTrip.miscBudget),
-      fundAmount: sanitiseMoney(cleanTrip.fundAmount),
+      fundAmount: sanitiseBudget(sanitiseMoney(cleanTrip.fundAmount) - legacyFundTransferTotal),
       foodEntries: Array.isArray(cleanTrip.foodEntries) ? cloneEntries(cleanTrip.foodEntries) : [],
       accommodationEntries: Array.isArray(cleanTrip.accommodationEntries) ? cloneEntries(cleanTrip.accommodationEntries) : [],
       miscEntries: Array.isArray(cleanTrip.miscEntries) ? cloneEntries(cleanTrip.miscEntries) : [],
-      fundTransfers: Array.isArray(cleanTrip.fundTransfers) ? cloneEntries(cleanTrip.fundTransfers) : []
+      fundTransfers: cleanFundTransfers
     };
   }
 
@@ -1554,7 +1600,7 @@
     appState.foodEntries = Array.isArray(trip.foodEntries) ? cloneEntries(trip.foodEntries) : [];
     appState.accommodationEntries = Array.isArray(trip.accommodationEntries) ? cloneEntries(trip.accommodationEntries) : [];
     appState.miscEntries = Array.isArray(trip.miscEntries) ? cloneEntries(trip.miscEntries) : [];
-    appState.fundTransfers = Array.isArray(trip.fundTransfers) ? cloneEntries(trip.fundTransfers) : [];
+    appState.fundTransfers = Array.isArray(trip.fundTransfers) ? normalizeFundTransfers(trip.fundTransfers) : [];
   }
 
   function updateActiveTripFromState() {
@@ -1575,6 +1621,38 @@
     return entries.map(function (entry) {
       return Object.assign({}, entry);
     });
+  }
+
+  function normalizeFundTransfers(transfers) {
+    if (!Array.isArray(transfers)) {
+      return [];
+    }
+
+    return transfers.map(function (transfer) {
+      const cleanTransfer = transfer && typeof transfer === "object" ? transfer : {};
+
+      return {
+        id: cleanTransfer.id || createId(),
+        from: cleanTransfer.from || "Funds",
+        to: cleanTransfer.to || cleanTransfer.destination || "Food",
+        amount: sanitiseMoney(cleanTransfer.amount),
+        createdAt: cleanTransfer.createdAt || new Date().toISOString()
+      };
+    });
+  }
+
+  function getLegacyFundTransferTotal(transfers) {
+    if (!Array.isArray(transfers)) {
+      return 0;
+    }
+
+    return transfers.reduce(function (sum, transfer) {
+      if (transfer && transfer.destination && !transfer.from && !transfer.to) {
+        return sum + (Number(transfer.amount) || 0);
+      }
+
+      return sum;
+    }, 0);
   }
 
   function sanitizeTripName(name) {
@@ -1781,7 +1859,8 @@
       appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
       appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
       appState.miscEntries = Array.isArray(parsed.miscEntries) ? parsed.miscEntries : [];
-      appState.fundTransfers = Array.isArray(parsed.fundTransfers) ? parsed.fundTransfers : [];
+      appState.fundAmount = sanitiseBudget(appState.fundAmount - getLegacyFundTransferTotal(parsed.fundTransfers));
+      appState.fundTransfers = Array.isArray(parsed.fundTransfers) ? normalizeFundTransfers(parsed.fundTransfers) : [];
       appState.trips = Array.isArray(parsed.trips) ? parsed.trips : [];
     } catch (error) {
       console.error("Could not load saved app data.", error);
