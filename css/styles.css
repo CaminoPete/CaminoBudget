@@ -1,4 +1,4 @@
-/* Version #43 July 9, 2026 */
+/* Version #44 July 9, 2026 */
 
 :root {
   --bg: #efefef;
@@ -14,10 +14,16 @@
   --food-card-border: #d9ca85;
   --acc-card-bg: #e3f0ff;
   --acc-card-border: #b9d3f3;
+  --misc-card-bg: #e9f5dd;
+  --misc-card-border: #bdd99d;
+  --funds-card-bg: #f4e7f1;
+  --funds-card-border: #d3afd0;
   --entry-food-a: #fff6cf;
   --entry-food-b: #f7edbf;
   --entry-acc-a: #eef6ff;
   --entry-acc-b: #ddeeff;
+  --entry-misc-a: #f4fbeb;
+  --entry-misc-b: #e5f2d6;
   --white: #fff;
   --danger: #9f2d2d;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -307,6 +313,16 @@ select {
   border-color: var(--acc-card-border);
 }
 
+.misc-card {
+  background: var(--misc-card-bg);
+  border-color: var(--misc-card-border);
+}
+
+.funds-card {
+  background: var(--funds-card-bg);
+  border-color: var(--funds-card-border);
+}
+
 .summary-label {
   font-size: 0.89rem;
   font-weight: 700;
@@ -368,8 +384,14 @@ select {
 }
 
 .food-entry-row,
-.accommodation-entry-row {
+.accommodation-entry-row,
+.misc-entry-row,
+.funds-entry-row {
   grid-template-columns: 1.6fr 0.72fr 0.95fr;
+}
+
+.two-field-grid {
+  align-items: stretch;
 }
 
 .action-row {
@@ -414,6 +436,11 @@ select {
   padding-right: 4px;
 }
 
+.compact-entries-list {
+  max-height: 180px;
+  min-height: 82px;
+}
+
 .empty-state {
   border: 1px dashed #bdbdbd;
   border-radius: 12px;
@@ -442,6 +469,14 @@ select {
 
 .entry-item.acc-day-b {
   background: var(--entry-acc-b);
+}
+
+.entry-item.misc-day-a {
+  background: var(--entry-misc-a);
+}
+
+.entry-item.misc-day-b {
+  background: var(--entry-misc-b);
 }
 
 .entry-top {
@@ -543,7 +578,9 @@ select {
 
 @media (max-width: 620px) {
   .food-entry-row,
-  .accommodation-entry-row {
+  .accommodation-entry-row,
+  .misc-entry-row,
+  .funds-entry-row {
     grid-template-columns: 1fr;
   }
 
@@ -638,6 +675,10 @@ select {
   .compact-field {
     max-width: 100%;
   }
+
+  .two-field-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 
@@ -697,7 +738,7 @@ select {
 @media (max-width: 430px) {
   .reset-section {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 

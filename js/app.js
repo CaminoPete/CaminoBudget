@@ -1,4 +1,4 @@
-// Version #43 July 9, 2026
+// Version #44 July 9, 2026
 
 (function () {
   "use strict";
@@ -15,8 +15,12 @@
     dayNumber: "D1",
     foodBudget: 1500,
     accommodationBudget: 900,
+    miscBudget: 0,
+    fundAmount: 0,
     foodEntries: [],
     accommodationEntries: [],
+    miscEntries: [],
+    fundTransfers: [],
     trips: []
   };
 
@@ -71,6 +75,31 @@
     cancelAccommodationEditBtn: document.getElementById("cancelAccommodationEditBtn"),
     accommodationEntriesList: document.getElementById("accommodationEntriesList"),
 
+    miscHeading: document.getElementById("miscHeading"),
+    miscHeadingDate: document.getElementById("miscHeadingDate"),
+    miscBudgetInput: document.getElementById("miscBudgetInput"),
+    confirmMiscBudgetBtn: document.getElementById("confirmMiscBudgetBtn"),
+    miscBalance: document.getElementById("miscBalance"),
+    miscEntryHeading: document.getElementById("miscEntryHeading"),
+    miscEditStatus: document.getElementById("miscEditStatus"),
+    miscItemInput: document.getElementById("miscItemInput"),
+    miscCostInput: document.getElementById("miscCostInput"),
+    confirmMiscCostBtn: document.getElementById("confirmMiscCostBtn"),
+    miscNoteInput: document.getElementById("miscNoteInput"),
+    confirmMiscNoteBtn: document.getElementById("confirmMiscNoteBtn"),
+    addMiscBtn: document.getElementById("addMiscBtn"),
+    cancelMiscEditBtn: document.getElementById("cancelMiscEditBtn"),
+    miscEntriesList: document.getElementById("miscEntriesList"),
+
+    fundAmountInput: document.getElementById("fundAmountInput"),
+    confirmFundAmountBtn: document.getElementById("confirmFundAmountBtn"),
+    fundBalance: document.getElementById("fundBalance"),
+    fundTransferAmountInput: document.getElementById("fundTransferAmountInput"),
+    confirmFundTransferAmountBtn: document.getElementById("confirmFundTransferAmountBtn"),
+    fundTransferSelect: document.getElementById("fundTransferSelect"),
+    updateFundTransferBtn: document.getElementById("updateFundTransferBtn"),
+    fundTransfersList: document.getElementById("fundTransfersList"),
+
     modalOverlay: document.getElementById("appModalOverlay"),
     modalTitle: document.getElementById("appModalTitle"),
     modalBody: document.getElementById("appModalBody"),
@@ -78,6 +107,7 @@
     modalCancel: document.getElementById("appModalCancel"),
     clearFoodBtn: document.getElementById("clearFoodBtn"),
     clearAccommodationBtn: document.getElementById("clearAccommodationBtn"),
+    clearMiscBtn: document.getElementById("clearMiscBtn"),
     tripSelect: document.getElementById("tripSelect"),
     tripNameInput: document.getElementById("tripNameInput"),
     confirmTripNameBtn: document.getElementById("confirmTripNameBtn"),
@@ -92,12 +122,15 @@
     foodEntryRow: els.addFoodBtn.parentElement,
     foodActionRow: els.cancelFoodEditBtn.parentElement,
     accommodationEntryRow: els.addAccommodationBtn.parentElement,
-    accommodationActionRow: els.cancelAccommodationEditBtn.parentElement
+    accommodationActionRow: els.cancelAccommodationEditBtn.parentElement,
+    miscEntryRow: els.addMiscBtn.parentElement,
+    miscActionRow: els.cancelMiscEditBtn.parentElement
   };
 
   let modalResolver = null;
   let currentEditFoodId = null;
   let currentEditAccommodationId = null;
+  let currentEditMiscId = null;
   let pendingUpdateWorker = null;
   let refreshingForUpdate = false;
 
@@ -162,21 +195,42 @@
       renderAll();
     });
 
+    bindCurrencyInput(els.miscBudgetInput, function (value) {
+      appState.miscBudget = value;
+      saveState();
+      renderAll();
+    });
+
+    bindCurrencyInput(els.fundAmountInput, function (value) {
+      appState.fundAmount = value;
+      saveState();
+      renderAll();
+    });
+
     bindCurrencyInput(els.foodAmountInput, function () {});
     bindCurrencyInput(els.accommodationAmountInput, function () {});
+    bindCurrencyInput(els.miscCostInput, function () {});
+    bindCurrencyInput(els.fundTransferAmountInput, function () {});
 
     bindConfirmButton(els.confirmDaysBtn, els.daysInput, true);
     bindConfirmButton(els.confirmDayNumberBtn, els.dayNumberInput, true);
     bindConfirmButton(els.confirmFoodBudgetBtn, els.foodBudgetInput, false);
     bindConfirmButton(els.confirmAccommodationBudgetBtn, els.accommodationBudgetInput, false);
+    bindConfirmButton(els.confirmMiscBudgetBtn, els.miscBudgetInput, false);
+    bindConfirmButton(els.confirmFundAmountBtn, els.fundAmountInput, false);
     bindConfirmButton(els.confirmFoodAmountBtn, els.foodAmountInput, false);
     bindConfirmButton(els.confirmAccommodationAmountBtn, els.accommodationAmountInput, false);
+    bindConfirmButton(els.confirmMiscCostBtn, els.miscCostInput, false);
+    bindConfirmButton(els.confirmFundTransferAmountBtn, els.fundTransferAmountInput, false);
     bindConfirmButton(els.confirmFoodNoteBtn, els.foodNoteInput, false);
     bindConfirmButton(els.confirmAccommodationNoteBtn, els.accommodationNoteInput, false);
+    bindConfirmButton(els.confirmMiscNoteBtn, els.miscNoteInput, false);
     bindConfirmButton(els.confirmTripNameBtn, els.tripNameInput, false);
 
     els.addFoodBtn.addEventListener("click", onAddOrUpdateFood);
     els.addAccommodationBtn.addEventListener("click", onAddOrUpdateAccommodation);
+    els.addMiscBtn.addEventListener("click", onAddOrUpdateMisc);
+    els.updateFundTransferBtn.addEventListener("click", onUpdateFundTransfer);
 
     els.cancelFoodEditBtn.addEventListener("click", function () {
       cancelFoodEdit(true);
@@ -185,6 +239,11 @@
 
     els.cancelAccommodationEditBtn.addEventListener("click", function () {
       cancelAccommodationEdit(true);
+      renderAll();
+    });
+
+    els.cancelMiscEditBtn.addEventListener("click", function () {
+      cancelMiscEdit(true);
       renderAll();
     });
 
@@ -238,6 +297,21 @@
       await showInfo("Accommodation entries cleared.");
     });
 
+    els.clearMiscBtn.addEventListener("click", async function () {
+      if (!appState.miscEntries.length) {
+        await showInfo("There are no Misc. & Other entries to clear.");
+        return;
+      }
+
+      const confirmed = await showConfirm(
+        "Clear all Misc. & Other entries?\n\nThis cannot be undone. Your Misc. & Other budget will stay the same."
+      );
+      if (!confirmed) return;
+
+      clearMiscEntries();
+      await showInfo("Misc. & Other entries cleared.");
+    });
+
     els.tripSelect.addEventListener("change", function () {
       switchTrip(els.tripSelect.value);
     });
@@ -268,11 +342,18 @@
 
     inputEl.addEventListener("blur", function () {
       const numericValue = sanitiseMoney(parseCurrencyInputValue(inputEl.value));
-      inputEl.value = numericValue === 0 && inputEl !== els.foodBudgetInput && inputEl !== els.accommodationBudgetInput
+      inputEl.value = numericValue === 0 && !isPersistentCurrencyInput(inputEl)
         ? ""
         : formatCurrency(numericValue);
       onValueCommit(numericValue);
     });
+  }
+
+  function isPersistentCurrencyInput(inputEl) {
+    return inputEl === els.foodBudgetInput ||
+      inputEl === els.accommodationBudgetInput ||
+      inputEl === els.miscBudgetInput ||
+      inputEl === els.fundAmountInput;
   }
 
   function bindConfirmButton(buttonEl, inputEl, dispatchChange) {
@@ -297,6 +378,8 @@
     els.dayNumberInput.value = appState.dayNumber;
     els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
     els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
+    els.miscBudgetInput.value = formatCurrency(appState.miscBudget);
+    els.fundAmountInput.value = formatCurrency(appState.fundAmount);
     els.tripNameInput.value = appState.tripName;
   }
 
@@ -307,15 +390,29 @@
     if (document.activeElement !== els.accommodationBudgetInput) {
       els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
     }
+    if (document.activeElement !== els.miscBudgetInput) {
+      els.miscBudgetInput.value = formatCurrency(appState.miscBudget);
+    }
+    if (document.activeElement !== els.fundAmountInput) {
+      els.fundAmountInput.value = formatCurrency(appState.fundAmount);
+    }
 
     const foodAmountValue = parseCurrencyInputValue(els.foodAmountInput.value);
     const accommodationAmountValue = parseCurrencyInputValue(els.accommodationAmountInput.value);
+    const miscCostValue = parseCurrencyInputValue(els.miscCostInput.value);
+    const fundTransferAmountValue = parseCurrencyInputValue(els.fundTransferAmountInput.value);
 
     if (document.activeElement !== els.foodAmountInput) {
       els.foodAmountInput.value = foodAmountValue ? formatCurrency(foodAmountValue) : "";
     }
     if (document.activeElement !== els.accommodationAmountInput) {
       els.accommodationAmountInput.value = accommodationAmountValue ? formatCurrency(accommodationAmountValue) : "";
+    }
+    if (document.activeElement !== els.miscCostInput) {
+      els.miscCostInput.value = miscCostValue ? formatCurrency(miscCostValue) : "";
+    }
+    if (document.activeElement !== els.fundTransferAmountInput) {
+      els.fundTransferAmountInput.value = fundTransferAmountValue ? formatCurrency(fundTransferAmountValue) : "";
     }
   }
 
@@ -333,10 +430,18 @@
     els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
     els.accommodationSpentTodayLabel.textContent = "Spent Today - " + dayLabel + ":";
 
+    els.miscHeading.querySelector(".section-main").textContent = "Misc. & Other - for " + dayLabel;
+    els.miscHeadingDate.textContent = headingDate;
+    els.miscEntryHeading.innerHTML = (currentEditMiscId ? 'Edit Misc. & Other Entry <span>- for ' : 'Add Misc. & Other Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
+
     renderFoodSummary();
     renderAccommodationSummary();
+    renderMiscSummary();
+    renderFundsSummary();
     renderFoodEntries();
     renderAccommodationEntries();
+    renderMiscEntries();
+    renderFundTransfers();
     renderTripControls();
     updateFormButtonStates();
   }
@@ -387,6 +492,18 @@
     els.accommodationRemainingDaily.textContent = formatCurrency(remainingDaily);
     els.accommodationSpentToday.textContent = formatCurrency(spentToday);
     setBudgetStatus(els.accommodationBudgetStatus, budgetStatus);
+  }
+
+  function renderMiscSummary() {
+    const totalBudget = Number(appState.miscBudget) || 0;
+    const totalSpent = sumEntries(appState.miscEntries);
+    const remainingBudget = totalBudget - totalSpent;
+
+    els.miscBalance.textContent = formatCurrency(remainingBudget);
+  }
+
+  function renderFundsSummary() {
+    els.fundBalance.textContent = formatCurrency(calculateFundBalance());
   }
 
   function renderFoodEntries() {
@@ -480,6 +597,83 @@
       btn.addEventListener("click", function () {
         deleteAccommodationEntry(btn.getAttribute("data-id"));
       });
+    });
+  }
+
+  function renderMiscEntries() {
+    els.miscEntriesList.innerHTML = "";
+
+    const sorted = getSortedEntries(appState.miscEntries);
+    if (!sorted.length) {
+      els.miscEntriesList.innerHTML = '<div class="empty-state">No misc. & other entries yet.</div>';
+      return;
+    }
+
+    const dayClassMap = buildDayAlternatingMap(sorted, "misc");
+
+    sorted.forEach(function (entry) {
+      const item = document.createElement("div");
+      item.className = "entry-item " + dayClassMap[entry.dayKey];
+
+      const noteText = entry.note ? " - Note: " + escapeHtml(entry.note) : "";
+
+      item.innerHTML = [
+        '<div class="entry-top">',
+        '<div class="entry-main">',
+        '<div class="entry-line-1">' + escapeHtml(entry.item) + " - " + escapeHtml(entry.dayNumber) + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        "</div>",
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
+        "</div>",
+        '<div class="entry-actions">',
+        '<button type="button" class="small-action-btn edit-misc-btn" data-id="' + escapeHtml(entry.id) + '">Edit</button>',
+        '<button type="button" class="small-action-btn delete-btn delete-misc-btn" data-id="' + escapeHtml(entry.id) + '">Delete</button>',
+        "</div>"
+      ].join("");
+
+      els.miscEntriesList.appendChild(item);
+    });
+
+    els.miscEntriesList.querySelectorAll(".edit-misc-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        startEditMisc(btn.getAttribute("data-id"));
+      });
+    });
+
+    els.miscEntriesList.querySelectorAll(".delete-misc-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        deleteMiscEntry(btn.getAttribute("data-id"));
+      });
+    });
+  }
+
+  function renderFundTransfers() {
+    els.fundTransfersList.innerHTML = "";
+
+    const sorted = appState.fundTransfers.slice().sort(function (a, b) {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    if (!sorted.length) {
+      els.fundTransfersList.innerHTML = '<div class="empty-state">No fund transfers yet.</div>';
+      return;
+    }
+
+    sorted.forEach(function (transfer) {
+      const item = document.createElement("div");
+      item.className = "entry-item";
+
+      item.innerHTML = [
+        '<div class="entry-top">',
+        '<div class="entry-main">',
+        '<div class="entry-line-1">' + escapeHtml(transfer.destination) + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(transfer.createdAt)) + "</div>",
+        "</div>",
+        '<div class="entry-amount">' + escapeHtml(formatCurrency(transfer.amount)) + "</div>",
+        "</div>"
+      ].join("");
+
+      els.fundTransfersList.appendChild(item);
     });
   }
 
@@ -615,6 +809,104 @@
     renderAll();
   }
 
+  async function onAddOrUpdateMisc() {
+    const itemName = sanitizeEntryText(els.miscItemInput.value);
+    const amount = sanitiseMoney(parseCurrencyInputValue(els.miscCostInput.value));
+    const note = els.miscNoteInput.value.trim();
+
+    if (!itemName) {
+      await showInfo("Please enter or select a Misc. & Other item.");
+      return;
+    }
+
+    if (amount <= 0) {
+      await showInfo("Please enter a valid Misc. & Other cost greater than 0.");
+      return;
+    }
+
+    if (currentEditMiscId) {
+      const entry = appState.miscEntries.find(function (existingEntry) {
+        return existingEntry.id === currentEditMiscId;
+      });
+
+      if (!entry) {
+        cancelMiscEdit();
+        renderAll();
+        await showInfo("That Misc. & Other entry could not be found.");
+        return;
+      }
+
+      entry.item = itemName;
+      entry.type = itemName;
+      entry.amount = amount;
+      entry.note = note;
+      entry.dayNumber = appState.dayNumber;
+      entry.dayKey = buildDaySortKey(appState.dayNumber);
+
+      cancelMiscEdit(false);
+      clearMiscEntryInputs();
+      saveState();
+      renderAll();
+      await showInfo("Misc. & Other entry updated.");
+      return;
+    }
+
+    appState.miscEntries.push({
+      id: createId(),
+      item: itemName,
+      type: itemName,
+      amount: amount,
+      note: note,
+      dayNumber: appState.dayNumber,
+      dayKey: buildDaySortKey(appState.dayNumber),
+      createdAt: new Date().toISOString()
+    });
+
+    clearMiscEntryInputs();
+    saveState();
+    renderAll();
+  }
+
+  async function onUpdateFundTransfer() {
+    const amount = sanitiseMoney(parseCurrencyInputValue(els.fundTransferAmountInput.value));
+    const destination = els.fundTransferSelect.value;
+
+    if (amount <= 0) {
+      await showInfo("Please enter a transfer amount greater than 0.");
+      return;
+    }
+
+    if (amount > calculateFundBalance()) {
+      const confirmed = await showConfirm(
+        "This transfer is greater than the current Fund balance.\n\nContinue anyway?"
+      );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    if (destination === "Food") {
+      appState.foodBudget = sanitiseMoney(appState.foodBudget + amount);
+    } else if (destination === "Accommodation") {
+      appState.accommodationBudget = sanitiseMoney(appState.accommodationBudget + amount);
+    } else {
+      appState.miscBudget = sanitiseMoney(appState.miscBudget + amount);
+    }
+
+    appState.fundTransfers.push({
+      id: createId(),
+      destination: destination,
+      amount: amount,
+      createdAt: new Date().toISOString()
+    });
+
+    els.fundTransferAmountInput.value = "";
+    saveState();
+    syncInputsFromState();
+    renderAll();
+  }
+
   function startEditFood(id) {
     const entry = appState.foodEntries.find(function (item) {
       return item.id === id;
@@ -626,6 +918,7 @@
     }
 
     cancelAccommodationEdit(false);
+    cancelMiscEdit(false);
     currentEditFoodId = id;
     appState.dayNumber = entry.dayNumber;
 
@@ -651,6 +944,7 @@
     }
 
     cancelFoodEdit(false);
+    cancelMiscEdit(false);
     currentEditAccommodationId = id;
     appState.dayNumber = entry.dayNumber;
 
@@ -661,6 +955,32 @@
       els.accommodationTypeSelect.value = entry.type;
       els.accommodationAmountInput.value = Number(entry.amount).toFixed(2);
       els.accommodationNoteInput.value = entry.note || "";
+      updateFormButtonStates();
+    }, 0);
+  }
+
+  function startEditMisc(id) {
+    const entry = appState.miscEntries.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!entry) {
+      showInfo("That Misc. & Other entry could not be found.");
+      return;
+    }
+
+    cancelFoodEdit(false);
+    cancelAccommodationEdit(false);
+    currentEditMiscId = id;
+    appState.dayNumber = entry.dayNumber;
+
+    syncInputsFromState();
+    renderAll();
+
+    setTimeout(function () {
+      els.miscItemInput.value = entry.item || entry.type || "";
+      els.miscCostInput.value = Number(entry.amount).toFixed(2);
+      els.miscNoteInput.value = entry.note || "";
       updateFormButtonStates();
     }, 0);
   }
@@ -737,6 +1057,42 @@
     renderAll();
   }
 
+  async function deleteMiscEntry(id) {
+    const entry = appState.miscEntries.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!entry) {
+      await showInfo("That Misc. & Other entry could not be found.");
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      "Delete this Misc. & Other entry?\n\n" +
+      "Day: " + entry.dayNumber + "\n" +
+      "Item: " + (entry.item || entry.type) + "\n" +
+      "Cost: " + formatCurrency(entry.amount) + "\n" +
+      "Date: " + formatEntryDate(entry.createdAt) +
+      (entry.note ? "\nNote: " + entry.note : "")
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    appState.miscEntries = appState.miscEntries.filter(function (item) {
+      return item.id !== id;
+    });
+
+    if (currentEditMiscId === id) {
+      cancelMiscEdit(false);
+      clearMiscEntryInputs();
+    }
+
+    saveState();
+    renderAll();
+  }
+
   function clearFoodEntryInputs() {
     els.foodTypeSelect.value = "Breakfast";
     els.foodAmountInput.value = "";
@@ -747,6 +1103,12 @@
     els.accommodationTypeSelect.value = "Albergue";
     els.accommodationAmountInput.value = "";
     els.accommodationNoteInput.value = "";
+  }
+
+  function clearMiscEntryInputs() {
+    els.miscItemInput.value = "";
+    els.miscCostInput.value = "";
+    els.miscNoteInput.value = "";
   }
 
   function cancelFoodEdit(clearFields = true) {
@@ -765,15 +1127,26 @@
     updateFormButtonStates();
   }
 
+  function cancelMiscEdit(clearFields = true) {
+    currentEditMiscId = null;
+    if (clearFields) {
+      clearMiscEntryInputs();
+    }
+    updateFormButtonStates();
+  }
+
   function updateFormButtonStates() {
     els.addFoodBtn.textContent = currentEditFoodId ? "Update Entry" : "Add Entry";
     els.addAccommodationBtn.textContent = currentEditAccommodationId ? "Update Entry" : "Add Entry";
+    els.addMiscBtn.textContent = currentEditMiscId ? "Update Entry" : "Add Entry";
 
     els.cancelFoodEditBtn.classList.toggle("hidden", !currentEditFoodId);
     els.cancelAccommodationEditBtn.classList.toggle("hidden", !currentEditAccommodationId);
+    els.cancelMiscEditBtn.classList.toggle("hidden", !currentEditMiscId);
 
     els.foodEditStatus.classList.toggle("hidden", !currentEditFoodId);
     els.accommodationEditStatus.classList.toggle("hidden", !currentEditAccommodationId);
+    els.miscEditStatus.classList.toggle("hidden", !currentEditMiscId);
 
     els.foodTypeSelect.classList.toggle("editing-active", Boolean(currentEditFoodId));
     els.foodAmountInput.classList.toggle("editing-active", Boolean(currentEditFoodId));
@@ -783,8 +1156,13 @@
     els.accommodationAmountInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationNoteInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
 
+    els.miscItemInput.classList.toggle("editing-active", Boolean(currentEditMiscId));
+    els.miscCostInput.classList.toggle("editing-active", Boolean(currentEditMiscId));
+    els.miscNoteInput.classList.toggle("editing-active", Boolean(currentEditMiscId));
+
     positionFoodActionButtons();
     positionAccommodationActionButtons();
+    positionMiscActionButtons();
   }
 
   function positionFoodActionButtons() {
@@ -807,6 +1185,18 @@
     } else {
       if (els.addAccommodationBtn.parentElement !== layoutEls.accommodationEntryRow) {
         layoutEls.accommodationEntryRow.appendChild(els.addAccommodationBtn);
+      }
+    }
+  }
+
+  function positionMiscActionButtons() {
+    if (currentEditMiscId) {
+      if (els.addMiscBtn.parentElement !== layoutEls.miscActionRow) {
+        layoutEls.miscActionRow.appendChild(els.addMiscBtn);
+      }
+    } else {
+      if (els.addMiscBtn.parentElement !== layoutEls.miscEntryRow) {
+        layoutEls.miscEntryRow.appendChild(els.addMiscBtn);
       }
     }
   }
@@ -878,12 +1268,18 @@
 
       if (type === "food") {
         result[entry.dayKey] = toggle ? "food-day-a" : "food-day-b";
-      } else {
+      } else if (type === "acc") {
         result[entry.dayKey] = toggle ? "acc-day-a" : "acc-day-b";
+      } else {
+        result[entry.dayKey] = toggle ? "misc-day-a" : "misc-day-b";
       }
     });
 
     return result;
+  }
+
+  function calculateFundBalance() {
+    return (Number(appState.fundAmount) || 0) - sumEntries(appState.fundTransfers);
   }
 
   function sumEntries(entries) {
@@ -910,6 +1306,10 @@
     const cleaned = String(value || "").replace(/[^0-9.\-]/g, "");
     const num = parseFloat(cleaned);
     return Number.isFinite(num) ? num : 0;
+  }
+
+  function sanitizeEntryText(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").slice(0, 60);
   }
 
   function sanitizeDayNumber(value) {
@@ -1063,8 +1463,12 @@
       dayNumber: sanitizeDayNumber(appState.dayNumber),
       foodBudget: sanitiseMoney(appState.foodBudget),
       accommodationBudget: sanitiseMoney(appState.accommodationBudget),
+      miscBudget: sanitiseMoney(appState.miscBudget),
+      fundAmount: sanitiseMoney(appState.fundAmount),
       foodEntries: cloneEntries(appState.foodEntries),
-      accommodationEntries: cloneEntries(appState.accommodationEntries)
+      accommodationEntries: cloneEntries(appState.accommodationEntries),
+      miscEntries: cloneEntries(appState.miscEntries),
+      fundTransfers: cloneEntries(appState.fundTransfers)
     };
   }
 
@@ -1077,8 +1481,12 @@
       dayNumber: "D1",
       foodBudget: 0,
       accommodationBudget: 0,
+      miscBudget: 0,
+      fundAmount: 0,
       foodEntries: [],
-      accommodationEntries: []
+      accommodationEntries: [],
+      miscEntries: [],
+      fundTransfers: []
     };
   }
 
@@ -1093,8 +1501,12 @@
       dayNumber: sanitizeDayNumber(cleanTrip.dayNumber || "D1"),
       foodBudget: sanitiseMoney(cleanTrip.foodBudget),
       accommodationBudget: sanitiseMoney(cleanTrip.accommodationBudget),
+      miscBudget: sanitiseMoney(cleanTrip.miscBudget),
+      fundAmount: sanitiseMoney(cleanTrip.fundAmount),
       foodEntries: Array.isArray(cleanTrip.foodEntries) ? cloneEntries(cleanTrip.foodEntries) : [],
-      accommodationEntries: Array.isArray(cleanTrip.accommodationEntries) ? cloneEntries(cleanTrip.accommodationEntries) : []
+      accommodationEntries: Array.isArray(cleanTrip.accommodationEntries) ? cloneEntries(cleanTrip.accommodationEntries) : [],
+      miscEntries: Array.isArray(cleanTrip.miscEntries) ? cloneEntries(cleanTrip.miscEntries) : [],
+      fundTransfers: Array.isArray(cleanTrip.fundTransfers) ? cloneEntries(cleanTrip.fundTransfers) : []
     };
   }
 
@@ -1112,8 +1524,12 @@
     appState.dayNumber = sanitizeDayNumber(trip.dayNumber || "D1");
     appState.foodBudget = sanitiseMoney(trip.foodBudget);
     appState.accommodationBudget = sanitiseMoney(trip.accommodationBudget);
+    appState.miscBudget = sanitiseMoney(trip.miscBudget);
+    appState.fundAmount = sanitiseMoney(trip.fundAmount);
     appState.foodEntries = Array.isArray(trip.foodEntries) ? cloneEntries(trip.foodEntries) : [];
     appState.accommodationEntries = Array.isArray(trip.accommodationEntries) ? cloneEntries(trip.accommodationEntries) : [];
+    appState.miscEntries = Array.isArray(trip.miscEntries) ? cloneEntries(trip.miscEntries) : [];
+    appState.fundTransfers = Array.isArray(trip.fundTransfers) ? cloneEntries(trip.fundTransfers) : [];
   }
 
   function updateActiveTripFromState() {
@@ -1170,8 +1586,10 @@
 
     cancelFoodEdit(false);
     cancelAccommodationEdit(false);
+    cancelMiscEdit(false);
     clearFoodEntryInputs();
     clearAccommodationEntryInputs();
+    clearMiscEntryInputs();
     applyTripToState(nextTrip);
     saveState();
     syncInputsFromState();
@@ -1195,8 +1613,10 @@
     appState.trips.push(newTrip);
     cancelFoodEdit(false);
     cancelAccommodationEdit(false);
+    cancelMiscEdit(false);
     clearFoodEntryInputs();
     clearAccommodationEntryInputs();
+    clearMiscEntryInputs();
     applyTripToState(newTrip);
     saveState();
     syncInputsFromState();
@@ -1252,7 +1672,7 @@
 
     const confirmed = await showConfirm(
       "Delete trip \"" + activeTrip.name + "\"?\n\n" +
-      "This will delete its budgets, Food entries, and Accommodation entries. This cannot be undone."
+      "This will delete its budgets, entries, and fund transfers. This cannot be undone."
     );
 
     if (!confirmed) {
@@ -1265,8 +1685,10 @@
 
     cancelFoodEdit(false);
     cancelAccommodationEdit(false);
+    cancelMiscEdit(false);
     clearFoodEntryInputs();
     clearAccommodationEntryInputs();
+    clearMiscEntryInputs();
     applyTripToState(appState.trips[0]);
     saveState();
     syncInputsFromState();
@@ -1296,6 +1718,17 @@
     renderAll();
   }
 
+  function clearMiscEntries() {
+    appState.miscEntries = [];
+
+    currentEditMiscId = null;
+
+    clearMiscEntryInputs();
+    saveState();
+    syncInputsFromState();
+    renderAll();
+  }
+
   function saveState() {
     updateActiveTripFromState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -1318,8 +1751,12 @@
       appState.dayNumber = parsed.dayNumber || appState.dayNumber;
       appState.foodBudget = Number.isFinite(parsed.foodBudget) ? parsed.foodBudget : appState.foodBudget;
       appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
+      appState.miscBudget = Number.isFinite(parsed.miscBudget) ? parsed.miscBudget : appState.miscBudget;
+      appState.fundAmount = Number.isFinite(parsed.fundAmount) ? parsed.fundAmount : appState.fundAmount;
       appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
       appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
+      appState.miscEntries = Array.isArray(parsed.miscEntries) ? parsed.miscEntries : [];
+      appState.fundTransfers = Array.isArray(parsed.fundTransfers) ? parsed.fundTransfers : [];
       appState.trips = Array.isArray(parsed.trips) ? parsed.trips : [];
     } catch (error) {
       console.error("Could not load saved app data.", error);
