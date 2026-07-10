@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #47 July 10, 2026 -->
+  <!-- Version #48 July 10, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=47" />
+  <link rel="stylesheet" href="css/styles.css?v=48" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v47</div>
+      <div class="version-tag">v48</div>
       <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
       <button type="button" id="updateAppBtn" class="update-app-btn hidden">Update App</button>
     </header>
@@ -107,18 +107,20 @@
             <option value="Other">Other</option>
           </select>
 
-          <div class="input-confirm-row">
-            <input id="foodAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
-            <button type="button" id="confirmFoodAmountBtn" class="field-confirm-btn" aria-label="Done editing food amount">&#10003;</button>
-          </div>
+          <div class="amount-payment-row">
+            <div class="input-confirm-row">
+              <input id="foodAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
+              <button type="button" id="confirmFoodAmountBtn" class="field-confirm-btn" aria-label="Done editing food amount">&#10003;</button>
+            </div>
 
-          <select id="foodPaymentSelect" aria-label="Food payment method">
-            <option value="Cash">Cash</option>
-            <option value="WISE">WISE</option>
-            <option value="VISA">VISA</option>
-            <option value="Mastercard">Mastercard</option>
-            <option value="Other">Other</option>
-          </select>
+            <select id="foodPaymentSelect" aria-label="Food payment method">
+              <option value="Cash">Cash</option>
+              <option value="WISE">WISE</option>
+              <option value="VISA">VISA</option>
+              <option value="Mastercard">Mastercard</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
           <button type="button" id="addFoodBtn" class="primary-btn">Add Entry</button>
         </div>
@@ -190,18 +192,20 @@
             <option value="Other">Other</option>
           </select>
 
-          <div class="input-confirm-row">
-            <input id="accommodationAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
-            <button type="button" id="confirmAccommodationAmountBtn" class="field-confirm-btn" aria-label="Done editing accommodation amount">&#10003;</button>
-          </div>
+          <div class="amount-payment-row">
+            <div class="input-confirm-row">
+              <input id="accommodationAmountInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
+              <button type="button" id="confirmAccommodationAmountBtn" class="field-confirm-btn" aria-label="Done editing accommodation amount">&#10003;</button>
+            </div>
 
-          <select id="accommodationPaymentSelect" aria-label="Accommodation payment method">
-            <option value="Cash">Cash</option>
-            <option value="WISE">WISE</option>
-            <option value="VISA">VISA</option>
-            <option value="Mastercard">Mastercard</option>
-            <option value="Other">Other</option>
-          </select>
+            <select id="accommodationPaymentSelect" aria-label="Accommodation payment method">
+              <option value="Cash">Cash</option>
+              <option value="WISE">WISE</option>
+              <option value="VISA">VISA</option>
+              <option value="Mastercard">Mastercard</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
           <button type="button" id="addAccommodationBtn" class="primary-btn">Add Entry</button>
         </div>
@@ -263,18 +267,20 @@
             <option value="Bank Fees"></option>
           </datalist>
 
-          <div class="input-confirm-row">
-            <input id="miscCostInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
-            <button type="button" id="confirmMiscCostBtn" class="field-confirm-btn" aria-label="Done editing misc cost">&#10003;</button>
-          </div>
+          <div class="amount-payment-row">
+            <div class="input-confirm-row">
+              <input id="miscCostInput" class="currency-input" type="text" inputmode="decimal" placeholder="0.00" />
+              <button type="button" id="confirmMiscCostBtn" class="field-confirm-btn" aria-label="Done editing misc cost">&#10003;</button>
+            </div>
 
-          <select id="miscPaymentSelect" aria-label="Misc. & Other payment method">
-            <option value="Cash">Cash</option>
-            <option value="WISE">WISE</option>
-            <option value="VISA">VISA</option>
-            <option value="Mastercard">Mastercard</option>
-            <option value="Other">Other</option>
-          </select>
+            <select id="miscPaymentSelect" aria-label="Misc. & Other payment method">
+              <option value="Cash">Cash</option>
+              <option value="WISE">WISE</option>
+              <option value="VISA">VISA</option>
+              <option value="Mastercard">Mastercard</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
 
           <button type="button" id="addMiscBtn" class="primary-btn">Add Entry</button>
         </div>
@@ -401,6 +407,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=47"></script>
+  <script src="js/app.js?v=48"></script>
 </body>
 </html>

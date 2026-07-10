@@ -1,4 +1,4 @@
-/* Version #47 July 10, 2026 */
+/* Version #48 July 10, 2026 */
 
 :root {
   --bg: #efefef;
@@ -397,7 +397,14 @@ select:required:invalid {
 .food-entry-row,
 .accommodation-entry-row,
 .misc-entry-row {
-  grid-template-columns: 1.35fr 0.72fr 0.86fr 0.9fr;
+  grid-template-columns: 1.2fr 1.8fr 0.85fr;
+}
+
+.amount-payment-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(98px, 0.75fr);
+  gap: 8px;
+  align-items: center;
 }
 
 .funds-entry-row {

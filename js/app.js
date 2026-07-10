@@ -1,4 +1,4 @@
-// Version #47 July 10, 2026
+// Version #48 July 10, 2026
 
 (function () {
   "use strict";
@@ -897,6 +897,7 @@
       );
 
       if (!confirmed) {
+        resetFundTransferInputs();
         return;
       }
     }
@@ -907,6 +908,7 @@
     );
 
     if (!confirmed) {
+      resetFundTransferInputs();
       return;
     }
 
@@ -920,7 +922,6 @@
       createdAt: new Date().toISOString()
     });
 
-    els.fundTransferAmountInput.value = "";
     resetFundTransferInputs();
     saveState();
     syncInputsFromState();
@@ -1178,6 +1179,7 @@
   function resetFundTransferInputs() {
     els.fundTransferFromSelect.value = "";
     els.fundTransferToSelect.value = "";
+    els.fundTransferAmountInput.value = "0.00";
   }
 
   function cancelFoodEdit(clearFields = true) {
