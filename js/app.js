@@ -1,4 +1,4 @@
-// Version #42 May 3, 2026
+// Version #43 July 9, 2026
 
 (function () {
   "use strict";
@@ -25,7 +25,9 @@
     updateAppBtn: document.getElementById("updateAppBtn"),
     currencySelect: document.getElementById("currencySelect"),
     daysInput: document.getElementById("daysInput"),
+    confirmDaysBtn: document.getElementById("confirmDaysBtn"),
     dayNumberInput: document.getElementById("dayNumberInput"),
+    confirmDayNumberBtn: document.getElementById("confirmDayNumberBtn"),
     prevDayBtn: document.getElementById("prevDayBtn"),
     nextDayBtn: document.getElementById("nextDayBtn"),
 
@@ -42,7 +44,9 @@
     foodEditStatus: document.getElementById("foodEditStatus"),
     foodTypeSelect: document.getElementById("foodTypeSelect"),
     foodAmountInput: document.getElementById("foodAmountInput"),
+    confirmFoodAmountBtn: document.getElementById("confirmFoodAmountBtn"),
     foodNoteInput: document.getElementById("foodNoteInput"),
+    confirmFoodNoteBtn: document.getElementById("confirmFoodNoteBtn"),
     addFoodBtn: document.getElementById("addFoodBtn"),
     cancelFoodEditBtn: document.getElementById("cancelFoodEditBtn"),
     foodEntriesList: document.getElementById("foodEntriesList"),
@@ -60,7 +64,9 @@
     accommodationEditStatus: document.getElementById("accommodationEditStatus"),
     accommodationTypeSelect: document.getElementById("accommodationTypeSelect"),
     accommodationAmountInput: document.getElementById("accommodationAmountInput"),
+    confirmAccommodationAmountBtn: document.getElementById("confirmAccommodationAmountBtn"),
     accommodationNoteInput: document.getElementById("accommodationNoteInput"),
+    confirmAccommodationNoteBtn: document.getElementById("confirmAccommodationNoteBtn"),
     addAccommodationBtn: document.getElementById("addAccommodationBtn"),
     cancelAccommodationEditBtn: document.getElementById("cancelAccommodationEditBtn"),
     accommodationEntriesList: document.getElementById("accommodationEntriesList"),
@@ -74,9 +80,12 @@
     clearAccommodationBtn: document.getElementById("clearAccommodationBtn"),
     tripSelect: document.getElementById("tripSelect"),
     tripNameInput: document.getElementById("tripNameInput"),
+    confirmTripNameBtn: document.getElementById("confirmTripNameBtn"),
     addTripBtn: document.getElementById("addTripBtn"),
     renameTripBtn: document.getElementById("renameTripBtn"),
-    deleteTripBtn: document.getElementById("deleteTripBtn")
+    deleteTripBtn: document.getElementById("deleteTripBtn"),
+    confirmFoodBudgetBtn: document.getElementById("confirmFoodBudgetBtn"),
+    confirmAccommodationBudgetBtn: document.getElementById("confirmAccommodationBudgetBtn")
   };
 
   const layoutEls = {
@@ -155,6 +164,16 @@
 
     bindCurrencyInput(els.foodAmountInput, function () {});
     bindCurrencyInput(els.accommodationAmountInput, function () {});
+
+    bindConfirmButton(els.confirmDaysBtn, els.daysInput, true);
+    bindConfirmButton(els.confirmDayNumberBtn, els.dayNumberInput, true);
+    bindConfirmButton(els.confirmFoodBudgetBtn, els.foodBudgetInput, false);
+    bindConfirmButton(els.confirmAccommodationBudgetBtn, els.accommodationBudgetInput, false);
+    bindConfirmButton(els.confirmFoodAmountBtn, els.foodAmountInput, false);
+    bindConfirmButton(els.confirmAccommodationAmountBtn, els.accommodationAmountInput, false);
+    bindConfirmButton(els.confirmFoodNoteBtn, els.foodNoteInput, false);
+    bindConfirmButton(els.confirmAccommodationNoteBtn, els.accommodationNoteInput, false);
+    bindConfirmButton(els.confirmTripNameBtn, els.tripNameInput, false);
 
     els.addFoodBtn.addEventListener("click", onAddOrUpdateFood);
     els.addAccommodationBtn.addEventListener("click", onAddOrUpdateAccommodation);
@@ -253,6 +272,21 @@
         ? ""
         : formatCurrency(numericValue);
       onValueCommit(numericValue);
+    });
+  }
+
+  function bindConfirmButton(buttonEl, inputEl, dispatchChange) {
+    if (!buttonEl || !inputEl) {
+      return;
+    }
+
+    buttonEl.addEventListener("click", function () {
+      if (dispatchChange) {
+        inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+
+      inputEl.blur();
+      buttonEl.focus();
     });
   }
 

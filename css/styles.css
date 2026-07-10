@@ -1,4 +1,4 @@
-/* Version #42 May 3, 2026 */
+/* Version #43 July 9, 2026 */
 
 :root {
   --bg: #efefef;
@@ -154,6 +154,34 @@ select {
   color: var(--text);
 }
 
+.input-confirm-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+.field-confirm-btn {
+  width: 42px;
+  min-height: 44px;
+  border: 1px solid #176b2c;
+  border-radius: 10px;
+  background: #1f8a3b;
+  color: var(--white);
+  padding: 0;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.field-confirm-btn:hover,
+.field-confirm-btn:focus {
+  background: #176b2c;
+  border-color: #125423;
+}
+
 #dayNumberInput {
   text-align: center;
   font-weight: 700;
@@ -164,7 +192,7 @@ select {
 
 .day-stepper-row {
   display: grid;
-  grid-template-columns: 42px minmax(62px, 1fr) 42px;
+  grid-template-columns: 42px minmax(62px, 1fr) 42px 42px;
   gap: 6px;
   align-items: center;
   width: 100%;
@@ -534,9 +562,13 @@ select {
   }
 
   .settings-grid {
-    grid-template-columns: minmax(130px, 1.2fr) minmax(58px, 0.5fr) minmax(118px, 1fr);
+    grid-template-columns: minmax(130px, 1fr) minmax(88px, 0.62fr);
     gap: 6px;
     align-items: end;
+  }
+
+  .day-number-block {
+    grid-column: 1 / -1;
   }
 
   .settings-grid .field-block {
@@ -550,11 +582,22 @@ select {
   }
 
   .settings-grid input,
-  .settings-grid select {
+  .settings-grid select,
+  .settings-grid .field-confirm-btn {
     min-height: 40px;
     border-radius: 9px;
     padding: 8px;
     font-size: 0.92rem;
+  }
+
+  .settings-grid .field-confirm-btn {
+    width: 34px;
+    padding: 0;
+  }
+
+  .settings-grid .input-confirm-row {
+    grid-template-columns: minmax(0, 1fr) 34px;
+    gap: 4px;
   }
 
   .settings-grid select {
@@ -570,8 +613,9 @@ select {
   }
 
   .day-stepper-row {
-    grid-template-columns: 32px minmax(42px, 1fr) 32px;
+    grid-template-columns: 32px minmax(72px, 1fr) 34px 32px;
     gap: 4px;
+    max-width: 220px;
   }
 
   .day-stepper-row .arrow-btn {
