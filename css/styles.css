@@ -1,4 +1,4 @@
-/* Version #44 July 9, 2026 */
+/* Version #45 July 9, 2026 */
 
 :root {
   --bg: #efefef;
@@ -158,6 +158,13 @@ select {
   padding: 10px 12px;
   background: var(--white);
   color: var(--text);
+}
+
+.read-only-currency-input {
+  background: #f1f3f5;
+  color: var(--blue);
+  font-weight: 800;
+  cursor: default;
 }
 
 .input-confirm-row {

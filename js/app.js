@@ -1,4 +1,4 @@
-// Version #44 July 9, 2026
+// Version #45 July 9, 2026
 
 (function () {
   "use strict";
@@ -13,8 +13,8 @@
     currency: "EUR",
     numberOfDays: 40,
     dayNumber: "D1",
-    foodBudget: 1500,
-    accommodationBudget: 900,
+    foodBudget: 0,
+    accommodationBudget: 0,
     miscBudget: 0,
     fundAmount: 0,
     foodEntries: [],
@@ -78,7 +78,6 @@
     miscHeading: document.getElementById("miscHeading"),
     miscHeadingDate: document.getElementById("miscHeadingDate"),
     miscBudgetInput: document.getElementById("miscBudgetInput"),
-    confirmMiscBudgetBtn: document.getElementById("confirmMiscBudgetBtn"),
     miscBalance: document.getElementById("miscBalance"),
     miscEntryHeading: document.getElementById("miscEntryHeading"),
     miscEditStatus: document.getElementById("miscEditStatus"),
@@ -113,9 +112,7 @@
     confirmTripNameBtn: document.getElementById("confirmTripNameBtn"),
     addTripBtn: document.getElementById("addTripBtn"),
     renameTripBtn: document.getElementById("renameTripBtn"),
-    deleteTripBtn: document.getElementById("deleteTripBtn"),
-    confirmFoodBudgetBtn: document.getElementById("confirmFoodBudgetBtn"),
-    confirmAccommodationBudgetBtn: document.getElementById("confirmAccommodationBudgetBtn")
+    deleteTripBtn: document.getElementById("deleteTripBtn")
   };
 
   const layoutEls = {
@@ -183,24 +180,6 @@
       renderAll();
     });
 
-    bindCurrencyInput(els.foodBudgetInput, function (value) {
-      appState.foodBudget = value;
-      saveState();
-      renderAll();
-    });
-
-    bindCurrencyInput(els.accommodationBudgetInput, function (value) {
-      appState.accommodationBudget = value;
-      saveState();
-      renderAll();
-    });
-
-    bindCurrencyInput(els.miscBudgetInput, function (value) {
-      appState.miscBudget = value;
-      saveState();
-      renderAll();
-    });
-
     bindCurrencyInput(els.fundAmountInput, function (value) {
       appState.fundAmount = value;
       saveState();
@@ -214,9 +193,6 @@
 
     bindConfirmButton(els.confirmDaysBtn, els.daysInput, true);
     bindConfirmButton(els.confirmDayNumberBtn, els.dayNumberInput, true);
-    bindConfirmButton(els.confirmFoodBudgetBtn, els.foodBudgetInput, false);
-    bindConfirmButton(els.confirmAccommodationBudgetBtn, els.accommodationBudgetInput, false);
-    bindConfirmButton(els.confirmMiscBudgetBtn, els.miscBudgetInput, false);
     bindConfirmButton(els.confirmFundAmountBtn, els.fundAmountInput, false);
     bindConfirmButton(els.confirmFoodAmountBtn, els.foodAmountInput, false);
     bindConfirmButton(els.confirmAccommodationAmountBtn, els.accommodationAmountInput, false);
@@ -670,10 +646,19 @@
         '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(transfer.createdAt)) + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(transfer.amount)) + "</div>",
+        "</div>",
+        '<div class="entry-actions">',
+        '<button type="button" class="small-action-btn delete-btn delete-fund-transfer-btn" data-id="' + escapeHtml(transfer.id) + '">Delete</button>',
         "</div>"
       ].join("");
 
       els.fundTransfersList.appendChild(item);
+    });
+
+    els.fundTransfersList.querySelectorAll(".delete-fund-transfer-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        deleteFundTransfer(btn.getAttribute("data-id"));
+      });
     });
   }
 
@@ -886,13 +871,7 @@
       }
     }
 
-    if (destination === "Food") {
-      appState.foodBudget = sanitiseMoney(appState.foodBudget + amount);
-    } else if (destination === "Accommodation") {
-      appState.accommodationBudget = sanitiseMoney(appState.accommodationBudget + amount);
-    } else {
-      appState.miscBudget = sanitiseMoney(appState.miscBudget + amount);
-    }
+    applyFundTransferToBudget(destination, amount);
 
     appState.fundTransfers.push({
       id: createId(),
@@ -905,6 +884,48 @@
     saveState();
     syncInputsFromState();
     renderAll();
+  }
+
+  async function deleteFundTransfer(id) {
+    const transfer = appState.fundTransfers.find(function (item) {
+      return item.id === id;
+    });
+
+    if (!transfer) {
+      await showInfo("That Fund transfer could not be found.");
+      return;
+    }
+
+    const confirmed = await showConfirm(
+      "Delete this Fund transfer?\n\n" +
+      "Transfer: " + transfer.destination + "\n" +
+      "Amount: " + formatCurrency(transfer.amount) + "\n" +
+      "Date: " + formatEntryDate(transfer.createdAt) + "\n\n" +
+      "This will return the amount to the Fund balance and remove it from the selected budget."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    applyFundTransferToBudget(transfer.destination, -transfer.amount);
+    appState.fundTransfers = appState.fundTransfers.filter(function (item) {
+      return item.id !== id;
+    });
+
+    saveState();
+    syncInputsFromState();
+    renderAll();
+  }
+
+  function applyFundTransferToBudget(destination, amount) {
+    if (destination === "Food") {
+      appState.foodBudget = sanitiseBudget(appState.foodBudget + amount);
+    } else if (destination === "Accommodation") {
+      appState.accommodationBudget = sanitiseBudget(appState.accommodationBudget + amount);
+    } else {
+      appState.miscBudget = sanitiseBudget(appState.miscBudget + amount);
+    }
   }
 
   function startEditFood(id) {
@@ -1300,6 +1321,10 @@
       return 0;
     }
     return Math.round(num * 100) / 100;
+  }
+
+  function sanitiseBudget(value) {
+    return sanitiseMoney(Math.max(0, Number(value) || 0));
   }
 
   function parseCurrencyInputValue(value) {

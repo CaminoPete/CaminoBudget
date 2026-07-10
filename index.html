@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #44 July 9, 2026 -->
+  <!-- Version #45 July 9, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=44" />
+  <link rel="stylesheet" href="css/styles.css?v=45" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v44</div>
+      <div class="version-tag">v45</div>
       <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
       <button type="button" id="updateAppBtn" class="update-app-btn hidden">Update App</button>
     </header>
@@ -66,10 +66,7 @@
 
         <div class="field-block compact-field">
           <label for="foodBudgetInput">Total Food Budget:</label>
-          <div class="input-confirm-row">
-            <input id="foodBudgetInput" class="currency-input" type="text" inputmode="decimal" value="1500" />
-            <button type="button" id="confirmFoodBudgetBtn" class="field-confirm-btn" aria-label="Update food budget">&#10003;</button>
-          </div>
+          <input id="foodBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
         </div>
 
         <div class="summary-grid">
@@ -144,10 +141,7 @@
 
         <div class="field-block compact-field">
           <label for="accommodationBudgetInput">Total Accommodation Budget:</label>
-          <div class="input-confirm-row">
-            <input id="accommodationBudgetInput" class="currency-input" type="text" inputmode="decimal" value="900" />
-            <button type="button" id="confirmAccommodationBudgetBtn" class="field-confirm-btn" aria-label="Update accommodation budget">&#10003;</button>
-          </div>
+          <input id="accommodationBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
         </div>
 
         <div class="summary-grid">
@@ -223,10 +217,7 @@
         <div class="summary-grid two-field-grid">
           <div class="field-block">
             <label for="miscBudgetInput">Budget:</label>
-            <div class="input-confirm-row">
-              <input id="miscBudgetInput" class="currency-input" type="text" inputmode="decimal" value="0" />
-              <button type="button" id="confirmMiscBudgetBtn" class="field-confirm-btn" aria-label="Update misc budget">&#10003;</button>
-            </div>
+            <input id="miscBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
           </div>
 
           <div class="summary-card misc-card">
@@ -370,6 +361,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=44"></script>
+  <script src="js/app.js?v=45"></script>
 </body>
 </html>
