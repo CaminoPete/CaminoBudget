@@ -1,4 +1,4 @@
-// Version #46 July 10, 2026
+// Version #47 July 10, 2026
 
 (function () {
   "use strict";
@@ -49,6 +49,7 @@
     foodTypeSelect: document.getElementById("foodTypeSelect"),
     foodAmountInput: document.getElementById("foodAmountInput"),
     confirmFoodAmountBtn: document.getElementById("confirmFoodAmountBtn"),
+    foodPaymentSelect: document.getElementById("foodPaymentSelect"),
     foodNoteInput: document.getElementById("foodNoteInput"),
     confirmFoodNoteBtn: document.getElementById("confirmFoodNoteBtn"),
     addFoodBtn: document.getElementById("addFoodBtn"),
@@ -69,6 +70,7 @@
     accommodationTypeSelect: document.getElementById("accommodationTypeSelect"),
     accommodationAmountInput: document.getElementById("accommodationAmountInput"),
     confirmAccommodationAmountBtn: document.getElementById("confirmAccommodationAmountBtn"),
+    accommodationPaymentSelect: document.getElementById("accommodationPaymentSelect"),
     accommodationNoteInput: document.getElementById("accommodationNoteInput"),
     confirmAccommodationNoteBtn: document.getElementById("confirmAccommodationNoteBtn"),
     addAccommodationBtn: document.getElementById("addAccommodationBtn"),
@@ -84,6 +86,7 @@
     miscItemInput: document.getElementById("miscItemInput"),
     miscCostInput: document.getElementById("miscCostInput"),
     confirmMiscCostBtn: document.getElementById("confirmMiscCostBtn"),
+    miscPaymentSelect: document.getElementById("miscPaymentSelect"),
     miscNoteInput: document.getElementById("miscNoteInput"),
     confirmMiscNoteBtn: document.getElementById("confirmMiscNoteBtn"),
     addMiscBtn: document.getElementById("addMiscBtn"),
@@ -497,6 +500,7 @@
     sorted.forEach(function (entry) {
       const item = document.createElement("div");
       item.className = "entry-item " + dayClassMap[entry.dayKey];
+      const paymentText = "Paid: " + escapeHtml(getEntryPaymentMethod(entry));
 
       const noteText = entry.note ? " • Note: " + escapeHtml(entry.note) : "";
 
@@ -504,7 +508,7 @@
         '<div class="entry-top">',
         '<div class="entry-main">',
         '<div class="entry-line-1">' + escapeHtml(entry.type) + " - " + escapeHtml(entry.dayNumber) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + " - " + paymentText + noteText + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
         "</div>",
@@ -544,6 +548,7 @@
     sorted.forEach(function (entry) {
       const item = document.createElement("div");
       item.className = "entry-item " + dayClassMap[entry.dayKey];
+      const paymentText = "Paid: " + escapeHtml(getEntryPaymentMethod(entry));
 
       const noteText = entry.note ? " • Note: " + escapeHtml(entry.note) : "";
 
@@ -551,7 +556,7 @@
         '<div class="entry-top">',
         '<div class="entry-main">',
         '<div class="entry-line-1">' + escapeHtml(entry.type) + " - " + escapeHtml(entry.dayNumber) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + " - " + paymentText + noteText + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
         "</div>",
@@ -591,6 +596,7 @@
     sorted.forEach(function (entry) {
       const item = document.createElement("div");
       item.className = "entry-item " + dayClassMap[entry.dayKey];
+      const paymentText = "Paid: " + escapeHtml(getEntryPaymentMethod(entry));
 
       const noteText = entry.note ? " - Note: " + escapeHtml(entry.note) : "";
 
@@ -598,7 +604,7 @@
         '<div class="entry-top">',
         '<div class="entry-main">',
         '<div class="entry-line-1">' + escapeHtml(entry.item) + " - " + escapeHtml(entry.dayNumber) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + " - " + paymentText + noteText + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
         "</div>",
@@ -668,6 +674,7 @@
   async function onAddOrUpdateFood() {
     const type = els.foodTypeSelect.value;
     const amount = sanitiseMoney(parseCurrencyInputValue(els.foodAmountInput.value));
+    const paymentMethod = els.foodPaymentSelect.value;
     const note = els.foodNoteInput.value.trim();
 
     if (amount <= 0) {
@@ -689,6 +696,7 @@
 
       entry.type = type;
       entry.amount = amount;
+      entry.paymentMethod = paymentMethod;
       entry.note = note;
       entry.dayNumber = appState.dayNumber;
       entry.dayKey = buildDaySortKey(appState.dayNumber);
@@ -705,6 +713,7 @@
       id: createId(),
       type: type,
       amount: amount,
+      paymentMethod: paymentMethod,
       note: note,
       dayNumber: appState.dayNumber,
       dayKey: buildDaySortKey(appState.dayNumber),
@@ -719,6 +728,7 @@
   async function onAddOrUpdateAccommodation() {
     const type = els.accommodationTypeSelect.value;
     const amount = sanitiseMoney(parseCurrencyInputValue(els.accommodationAmountInput.value));
+    const paymentMethod = els.accommodationPaymentSelect.value;
     const note = els.accommodationNoteInput.value.trim();
 
     if (amount <= 0) {
@@ -740,6 +750,7 @@
 
       entry.type = type;
       entry.amount = amount;
+      entry.paymentMethod = paymentMethod;
       entry.note = note;
       entry.dayNumber = appState.dayNumber;
       entry.dayKey = buildDaySortKey(appState.dayNumber);
@@ -772,6 +783,7 @@
 
       existingForDay.type = type;
       existingForDay.amount = amount;
+      existingForDay.paymentMethod = paymentMethod;
       existingForDay.note = note;
       existingForDay.dayKey = buildDaySortKey(appState.dayNumber);
       existingForDay.createdAt = new Date().toISOString();
@@ -786,6 +798,7 @@
       id: createId(),
       type: type,
       amount: amount,
+      paymentMethod: paymentMethod,
       note: note,
       dayNumber: appState.dayNumber,
       dayKey: buildDaySortKey(appState.dayNumber),
@@ -800,6 +813,7 @@
   async function onAddOrUpdateMisc() {
     const itemName = sanitizeEntryText(els.miscItemInput.value);
     const amount = sanitiseMoney(parseCurrencyInputValue(els.miscCostInput.value));
+    const paymentMethod = els.miscPaymentSelect.value;
     const note = els.miscNoteInput.value.trim();
 
     if (!itemName) {
@@ -827,6 +841,7 @@
       entry.item = itemName;
       entry.type = itemName;
       entry.amount = amount;
+      entry.paymentMethod = paymentMethod;
       entry.note = note;
       entry.dayNumber = appState.dayNumber;
       entry.dayKey = buildDaySortKey(appState.dayNumber);
@@ -844,6 +859,7 @@
       item: itemName,
       type: itemName,
       amount: amount,
+      paymentMethod: paymentMethod,
       note: note,
       dayNumber: appState.dayNumber,
       dayKey: buildDaySortKey(appState.dayNumber),
@@ -859,6 +875,11 @@
     const amount = sanitiseMoney(parseCurrencyInputValue(els.fundTransferAmountInput.value));
     const fromAccount = els.fundTransferFromSelect.value;
     const toAccount = els.fundTransferToSelect.value;
+
+    if (!fromAccount || !toAccount) {
+      await showInfo("Please choose both Transfer FROM and Transfer TO accounts.");
+      return;
+    }
 
     if (amount <= 0) {
       await showInfo("Please enter a transfer amount greater than 0.");
@@ -880,6 +901,15 @@
       }
     }
 
+    const confirmed = await showConfirm(
+      "Transfer " + formatCurrency(amount) + " from " + fromAccount + " to " + toAccount + "?\n\n" +
+      "Press OK to complete the transfer or Cancel to change your mind."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     applyAccountTransfer(fromAccount, toAccount, amount);
 
     appState.fundTransfers.push({
@@ -891,6 +921,7 @@
     });
 
     els.fundTransferAmountInput.value = "";
+    resetFundTransferInputs();
     saveState();
     syncInputsFromState();
     renderAll();
@@ -955,6 +986,7 @@
     setTimeout(function () {
       els.foodTypeSelect.value = entry.type;
       els.foodAmountInput.value = Number(entry.amount).toFixed(2);
+      els.foodPaymentSelect.value = getEntryPaymentMethod(entry);
       els.foodNoteInput.value = entry.note || "";
       updateFormButtonStates();
     }, 0);
@@ -981,6 +1013,7 @@
     setTimeout(function () {
       els.accommodationTypeSelect.value = entry.type;
       els.accommodationAmountInput.value = Number(entry.amount).toFixed(2);
+      els.accommodationPaymentSelect.value = getEntryPaymentMethod(entry);
       els.accommodationNoteInput.value = entry.note || "";
       updateFormButtonStates();
     }, 0);
@@ -1007,6 +1040,7 @@
     setTimeout(function () {
       els.miscItemInput.value = entry.item || entry.type || "";
       els.miscCostInput.value = Number(entry.amount).toFixed(2);
+      els.miscPaymentSelect.value = getEntryPaymentMethod(entry);
       els.miscNoteInput.value = entry.note || "";
       updateFormButtonStates();
     }, 0);
@@ -1123,19 +1157,27 @@
   function clearFoodEntryInputs() {
     els.foodTypeSelect.value = "Breakfast";
     els.foodAmountInput.value = "";
+    els.foodPaymentSelect.value = "Cash";
     els.foodNoteInput.value = "";
   }
 
   function clearAccommodationEntryInputs() {
     els.accommodationTypeSelect.value = "Albergue";
     els.accommodationAmountInput.value = "";
+    els.accommodationPaymentSelect.value = "Cash";
     els.accommodationNoteInput.value = "";
   }
 
   function clearMiscEntryInputs() {
     els.miscItemInput.value = "";
     els.miscCostInput.value = "";
+    els.miscPaymentSelect.value = "Cash";
     els.miscNoteInput.value = "";
+  }
+
+  function resetFundTransferInputs() {
+    els.fundTransferFromSelect.value = "";
+    els.fundTransferToSelect.value = "";
   }
 
   function cancelFoodEdit(clearFields = true) {
@@ -1177,14 +1219,17 @@
 
     els.foodTypeSelect.classList.toggle("editing-active", Boolean(currentEditFoodId));
     els.foodAmountInput.classList.toggle("editing-active", Boolean(currentEditFoodId));
+    els.foodPaymentSelect.classList.toggle("editing-active", Boolean(currentEditFoodId));
     els.foodNoteInput.classList.toggle("editing-active", Boolean(currentEditFoodId));
 
     els.accommodationTypeSelect.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationAmountInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
+    els.accommodationPaymentSelect.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
     els.accommodationNoteInput.classList.toggle("editing-active", Boolean(currentEditAccommodationId));
 
     els.miscItemInput.classList.toggle("editing-active", Boolean(currentEditMiscId));
     els.miscCostInput.classList.toggle("editing-active", Boolean(currentEditMiscId));
+    els.miscPaymentSelect.classList.toggle("editing-active", Boolean(currentEditMiscId));
     els.miscNoteInput.classList.toggle("editing-active", Boolean(currentEditMiscId));
 
     positionFoodActionButtons();
@@ -1345,6 +1390,13 @@
 
   function getTransferToAccount(transfer) {
     return transfer && transfer.to ? transfer.to : (transfer && transfer.destination ? transfer.destination : "Food");
+  }
+
+  function getEntryPaymentMethod(entry) {
+    const method = entry && entry.paymentMethod ? String(entry.paymentMethod) : "Cash";
+    const allowedMethods = ["Cash", "WISE", "VISA", "Mastercard", "Other"];
+
+    return allowedMethods.indexOf(method) === -1 ? "Cash" : method;
   }
 
   function sumEntries(entries) {

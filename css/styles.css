@@ -1,4 +1,4 @@
-/* Version #46 July 10, 2026 */
+/* Version #47 July 10, 2026 */
 
 :root {
   --bg: #efefef;
@@ -158,6 +158,10 @@ select {
   padding: 10px 12px;
   background: var(--white);
   color: var(--text);
+}
+
+select:required:invalid {
+  color: #777;
 }
 
 .read-only-currency-input {
@@ -393,7 +397,7 @@ select {
 .food-entry-row,
 .accommodation-entry-row,
 .misc-entry-row {
-  grid-template-columns: 1.6fr 0.72fr 0.95fr;
+  grid-template-columns: 1.35fr 0.72fr 0.86fr 0.9fr;
 }
 
 .funds-entry-row {
