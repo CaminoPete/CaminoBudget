@@ -1,4 +1,4 @@
-// Version #52 July 13, 2026
+// Version #53 July 13, 2026
 
 (function () {
   "use strict";
@@ -1038,7 +1038,7 @@
     renderAll();
 
     setTimeout(function () {
-      els.miscItemInput.value = entry.item || entry.type || "";
+      setMiscItemSelectValue(entry.item || entry.type || "");
       els.miscCostInput.value = Number(entry.amount).toFixed(2);
       els.miscPaymentSelect.value = getEntryPaymentMethod(entry);
       els.miscNoteInput.value = entry.note || "";
@@ -1169,10 +1169,41 @@
   }
 
   function clearMiscEntryInputs() {
+    removeCustomMiscItemOption();
     els.miscItemInput.value = "";
     els.miscCostInput.value = "";
     els.miscPaymentSelect.value = "Cash";
     els.miscNoteInput.value = "";
+  }
+
+  function setMiscItemSelectValue(value) {
+    const cleanValue = sanitizeEntryText(value);
+
+    if (!cleanValue) {
+      els.miscItemInput.value = "";
+      return;
+    }
+
+    const existingOption = Array.from(els.miscItemInput.options).find(function (option) {
+      return option.value === cleanValue;
+    });
+
+    if (!existingOption) {
+      removeCustomMiscItemOption();
+      const option = document.createElement("option");
+      option.value = cleanValue;
+      option.textContent = cleanValue;
+      option.setAttribute("data-custom", "true");
+      els.miscItemInput.appendChild(option);
+    }
+
+    els.miscItemInput.value = cleanValue;
+  }
+
+  function removeCustomMiscItemOption() {
+    Array.from(els.miscItemInput.querySelectorAll("option[data-custom='true']")).forEach(function (option) {
+      option.remove();
+    });
   }
 
   function resetFundTransferInputs() {

@@ -1,4 +1,4 @@
-/* Version #52 July 13, 2026 */
+/* Version #53 July 13, 2026 */
 
 :root {
   --bg: #efefef;
@@ -169,6 +169,11 @@ select:required:invalid {
   color: var(--blue);
   font-weight: 800;
   cursor: default;
+}
+
+#miscItemInput {
+  background: var(--food-card-bg);
+  border-color: var(--food-card-border);
 }
 
 .input-confirm-row {
@@ -493,12 +498,12 @@ select:required:invalid {
 }
 
 .entries-list .entry-item.misc-day-a {
-  background: var(--entry-misc-a);
+  background: var(--entry-misc-a) !important;
   border-color: var(--food-card-border);
 }
 
 .entries-list .entry-item.misc-day-b {
-  background: var(--entry-misc-b);
+  background: var(--entry-misc-b) !important;
   border-color: var(--food-card-border);
 }
 

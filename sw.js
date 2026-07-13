@@ -1,10 +1,10 @@
-const CACHE_NAME = "trip-budget-tracker-v52";
+const CACHE_NAME = "trip-budget-tracker-v53";
 
 const APP_FILES = [
   "./",
   "./index.html",
-  "./css/styles.css?v=52",
-  "./js/app.js?v=52",
+  "./css/styles.css?v=53",
+  "./js/app.js?v=53",
   "./manifest.webmanifest",
   "./icon.svg"
 ];
