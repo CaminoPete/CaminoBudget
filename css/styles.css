@@ -1,4 +1,4 @@
-/* Version #53 July 13, 2026 */
+/* Version #54 July 13, 2026 */
 
 :root {
   --bg: #efefef;
@@ -122,7 +122,7 @@ body {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: minmax(120px, 1.2fr) minmax(85px, 0.65fr) minmax(145px, 1fr);
+  grid-template-columns: minmax(140px, 1fr) minmax(170px, 1fr);
   gap: 10px;
   align-items: end;
 }
@@ -302,6 +302,19 @@ select:required:invalid {
 
 .compact-field {
   max-width: 370px;
+}
+
+.budget-days-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(120px, 0.75fr);
+  gap: 10px;
+  align-items: end;
+  max-width: 560px;
+}
+
+.days-field input {
+  text-align: center;
+  font-weight: 700;
 }
 
 .summary-grid {
@@ -627,13 +640,13 @@ select:required:invalid {
   }
 
   .settings-grid {
-    grid-template-columns: minmax(130px, 1fr) minmax(88px, 0.62fr);
+    grid-template-columns: minmax(130px, 1fr) minmax(145px, 1fr);
     gap: 6px;
     align-items: end;
   }
 
   .day-number-block {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .settings-grid .field-block {
@@ -696,12 +709,17 @@ select:required:invalid {
   }
 
   .summary-grid,
+  .budget-days-row,
   .entry-row,
   .action-row,
   .note-block,
   .entries-section,
   .compact-field {
     max-width: 100%;
+  }
+
+  .budget-days-row {
+    grid-template-columns: 1fr;
   }
 
   .two-field-grid {

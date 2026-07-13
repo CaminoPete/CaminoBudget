@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #53 July 13, 2026 -->
+  <!-- Version #54 July 13, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=53" />
+  <link rel="stylesheet" href="css/styles.css?v=54" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v53</div>
+      <div class="version-tag">v54</div>
       <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
       <button type="button" id="updateAppBtn" class="update-app-btn hidden">Update App</button>
     </header>
@@ -30,17 +30,6 @@
               <option value="CAD">Canadian Dollars ($)</option>
               <option value="USD">USA Dollars (US$)</option>
             </select>
-          </div>
-
-          <div class="field-block days-block">
-            <label for="daysInput">
-              <span class="label-full">Number of Days:</span>
-              <span class="label-compact"># Days:</span>
-            </label>
-            <div class="input-confirm-row">
-              <input id="daysInput" type="number" min="1" step="1" value="40" />
-              <button type="button" id="confirmDaysBtn" class="field-confirm-btn" aria-label="Update number of days">&#10003;</button>
-            </div>
           </div>
 
           <div class="field-block day-number-block">
@@ -64,9 +53,19 @@
           <span class="section-date" id="foodHeadingDate">Mar 24, 2026</span>
         </h2>
 
-        <div class="field-block compact-field">
-          <label for="foodBudgetInput">Total Food Budget:</label>
-          <input id="foodBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
+        <div class="budget-days-row">
+          <div class="field-block compact-field">
+            <label for="foodBudgetInput">Total Food Budget:</label>
+            <input id="foodBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
+          </div>
+
+          <div class="field-block days-field">
+            <label for="foodDaysInput">Food Days:</label>
+            <div class="input-confirm-row">
+              <input id="foodDaysInput" type="number" min="1" step="1" value="40" />
+              <button type="button" id="confirmFoodDaysBtn" class="field-confirm-btn" aria-label="Update food days">&#10003;</button>
+            </div>
+          </div>
         </div>
 
         <div class="summary-grid">
@@ -149,9 +148,19 @@
           <span class="section-date" id="accommodationHeadingDate">Mar 24, 2026</span>
         </h2>
 
-        <div class="field-block compact-field">
-          <label for="accommodationBudgetInput">Total Accommodation Budget:</label>
-          <input id="accommodationBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
+        <div class="budget-days-row">
+          <div class="field-block compact-field">
+            <label for="accommodationBudgetInput">Total Accommodation Budget:</label>
+            <input id="accommodationBudgetInput" class="currency-input read-only-currency-input" type="text" inputmode="decimal" value="0" readonly />
+          </div>
+
+          <div class="field-block days-field">
+            <label for="accommodationDaysInput">Accommodation Days:</label>
+            <div class="input-confirm-row">
+              <input id="accommodationDaysInput" type="number" min="1" step="1" value="40" />
+              <button type="button" id="confirmAccommodationDaysBtn" class="field-confirm-btn" aria-label="Update accommodation days">&#10003;</button>
+            </div>
+          </div>
         </div>
 
         <div class="summary-grid">
@@ -411,6 +420,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=53"></script>
+  <script src="js/app.js?v=54"></script>
 </body>
 </html>

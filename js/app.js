@@ -1,4 +1,4 @@
-// Version #53 July 13, 2026
+// Version #54 July 13, 2026
 
 (function () {
   "use strict";
@@ -12,6 +12,8 @@
     tripName: DEFAULT_TRIP_NAME,
     currency: "EUR",
     numberOfDays: 40,
+    foodNumberOfDays: 40,
+    accommodationNumberOfDays: 40,
     dayNumber: "D1",
     foodBudget: 0,
     accommodationBudget: 0,
@@ -28,8 +30,6 @@
     tripNameDisplay: document.getElementById("tripNameDisplay"),
     updateAppBtn: document.getElementById("updateAppBtn"),
     currencySelect: document.getElementById("currencySelect"),
-    daysInput: document.getElementById("daysInput"),
-    confirmDaysBtn: document.getElementById("confirmDaysBtn"),
     dayNumberInput: document.getElementById("dayNumberInput"),
     confirmDayNumberBtn: document.getElementById("confirmDayNumberBtn"),
     prevDayBtn: document.getElementById("prevDayBtn"),
@@ -38,6 +38,8 @@
     foodHeading: document.getElementById("foodHeading"),
     foodHeadingDate: document.getElementById("foodHeadingDate"),
     foodBudgetInput: document.getElementById("foodBudgetInput"),
+    foodDaysInput: document.getElementById("foodDaysInput"),
+    confirmFoodDaysBtn: document.getElementById("confirmFoodDaysBtn"),
     foodStartingDaily: document.getElementById("foodStartingDaily"),
     foodRemainingBudget: document.getElementById("foodRemainingBudget"),
     foodBudgetStatus: document.getElementById("foodBudgetStatus"),
@@ -59,6 +61,8 @@
     accommodationHeading: document.getElementById("accommodationHeading"),
     accommodationHeadingDate: document.getElementById("accommodationHeadingDate"),
     accommodationBudgetInput: document.getElementById("accommodationBudgetInput"),
+    accommodationDaysInput: document.getElementById("accommodationDaysInput"),
+    confirmAccommodationDaysBtn: document.getElementById("confirmAccommodationDaysBtn"),
     accommodationStartingDaily: document.getElementById("accommodationStartingDaily"),
     accommodationRemainingBudget: document.getElementById("accommodationRemainingBudget"),
     accommodationBudgetStatus: document.getElementById("accommodationBudgetStatus"),
@@ -155,9 +159,15 @@
       renderAll();
     });
 
-    els.daysInput.addEventListener("change", function () {
-      const val = parseInt(els.daysInput.value, 10);
-      appState.numberOfDays = Number.isFinite(val) && val > 0 ? val : 1;
+    els.foodDaysInput.addEventListener("change", function () {
+      appState.foodNumberOfDays = sanitizePositiveInteger(els.foodDaysInput.value, 1);
+      syncInputsFromState();
+      saveState();
+      renderAll();
+    });
+
+    els.accommodationDaysInput.addEventListener("change", function () {
+      appState.accommodationNumberOfDays = sanitizePositiveInteger(els.accommodationDaysInput.value, 1);
       syncInputsFromState();
       saveState();
       renderAll();
@@ -195,7 +205,8 @@
     bindCurrencyInput(els.miscCostInput, function () {});
     bindCurrencyInput(els.fundTransferAmountInput, function () {});
 
-    bindConfirmButton(els.confirmDaysBtn, els.daysInput, true);
+    bindConfirmButton(els.confirmFoodDaysBtn, els.foodDaysInput, true);
+    bindConfirmButton(els.confirmAccommodationDaysBtn, els.accommodationDaysInput, true);
     bindConfirmButton(els.confirmDayNumberBtn, els.dayNumberInput, true);
     bindConfirmButton(els.confirmFundAmountBtn, els.fundAmountInput, false);
     bindConfirmButton(els.confirmFoodAmountBtn, els.foodAmountInput, false);
@@ -354,7 +365,8 @@
   function syncInputsFromState() {
     els.tripNameDisplay.textContent = appState.tripName;
     els.currencySelect.value = appState.currency;
-    els.daysInput.value = appState.numberOfDays;
+    els.foodDaysInput.value = appState.foodNumberOfDays;
+    els.accommodationDaysInput.value = appState.accommodationNumberOfDays;
     els.dayNumberInput.value = appState.dayNumber;
     els.foodBudgetInput.value = formatCurrency(appState.foodBudget);
     els.accommodationBudgetInput.value = formatCurrency(appState.accommodationBudget);
@@ -446,10 +458,10 @@
     const totalBudget = Number(appState.foodBudget) || 0;
     const totalSpent = sumEntries(appState.foodEntries);
     const spentToday = sumEntriesByDay(appState.foodEntries, appState.dayNumber);
-    const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const startingDaily = appState.foodNumberOfDays > 0 ? totalBudget / appState.foodNumberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.foodEntries);
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.foodEntries, appState.foodNumberOfDays);
 
     els.foodStartingDaily.textContent = formatCurrency(startingDaily);
     els.foodRemainingBudget.textContent = formatCurrency(remainingBudget);
@@ -462,10 +474,10 @@
     const totalBudget = Number(appState.accommodationBudget) || 0;
     const totalSpent = sumEntries(appState.accommodationEntries);
     const spentToday = sumEntriesByDay(appState.accommodationEntries, appState.dayNumber);
-    const startingDaily = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const startingDaily = appState.accommodationNumberOfDays > 0 ? totalBudget / appState.accommodationNumberOfDays : 0;
     const remainingBudget = totalBudget - totalSpent;
     const remainingDaily = startingDaily - spentToday;
-    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.accommodationEntries);
+    const budgetStatus = calculateBudgetStatus(totalBudget, totalSpent, appState.accommodationEntries, appState.accommodationNumberOfDays);
 
     els.accommodationStartingDaily.textContent = formatCurrency(startingDaily);
     els.accommodationRemainingBudget.textContent = formatCurrency(remainingBudget);
@@ -1305,12 +1317,12 @@
     }
   }
 
-  function calculateBudgetStatus(totalBudget, totalSpent, entries) {
+  function calculateBudgetStatus(totalBudget, totalSpent, entries, numberOfDays) {
     if (!Array.isArray(entries) || entries.length === 0) {
       return 0;
     }
 
-    const dailyBudget = appState.numberOfDays > 0 ? totalBudget / appState.numberOfDays : 0;
+    const dailyBudget = numberOfDays > 0 ? totalBudget / numberOfDays : 0;
     const uniqueEntryDays = countUniqueEntryDays(entries);
     const expectedSpendForEnteredDays = dailyBudget * uniqueEntryDays;
 
@@ -1443,6 +1455,21 @@
     }, 0);
   }
 
+  function sanitizePositiveInteger(value, fallback) {
+    const num = parseInt(value, 10);
+    if (!Number.isFinite(num) || num < 1) {
+      return fallback || 1;
+    }
+    return num;
+  }
+
+  function getTripDateSpanDays() {
+    return Math.max(
+      sanitizePositiveInteger(appState.foodNumberOfDays, 1),
+      sanitizePositiveInteger(appState.accommodationNumberOfDays, 1)
+    );
+  }
+
   function sanitiseMoney(value) {
     const num = parseFloat(value);
     if (!Number.isFinite(num) || num < 0) {
@@ -1532,7 +1559,7 @@
     } else if (prefix === "S") {
       offsetDays = -num;
     } else if (prefix === "F") {
-      offsetDays = appState.numberOfDays + (num - 1);
+      offsetDays = getTripDateSpanDays() + (num - 1);
     }
 
     const targetDate = new Date(today);
@@ -1613,6 +1640,8 @@
       name: sanitizeTripName(name) || DEFAULT_TRIP_NAME,
       currency: appState.currency || "EUR",
       numberOfDays: Number.isFinite(appState.numberOfDays) ? appState.numberOfDays : 40,
+      foodNumberOfDays: sanitizePositiveInteger(appState.foodNumberOfDays, sanitizePositiveInteger(appState.numberOfDays, 40)),
+      accommodationNumberOfDays: sanitizePositiveInteger(appState.accommodationNumberOfDays, sanitizePositiveInteger(appState.numberOfDays, 40)),
       dayNumber: sanitizeDayNumber(appState.dayNumber),
       foodBudget: sanitiseMoney(appState.foodBudget),
       accommodationBudget: sanitiseMoney(appState.accommodationBudget),
@@ -1631,6 +1660,8 @@
       name: sanitizeTripName(name) || getNextTripName(),
       currency: appState.currency || "EUR",
       numberOfDays: Number.isFinite(appState.numberOfDays) ? appState.numberOfDays : 40,
+      foodNumberOfDays: sanitizePositiveInteger(appState.foodNumberOfDays, sanitizePositiveInteger(appState.numberOfDays, 40)),
+      accommodationNumberOfDays: sanitizePositiveInteger(appState.accommodationNumberOfDays, sanitizePositiveInteger(appState.numberOfDays, 40)),
       dayNumber: "D1",
       foodBudget: 0,
       accommodationBudget: 0,
@@ -1647,12 +1678,15 @@
     const cleanTrip = trip && typeof trip === "object" ? trip : {};
     const cleanFundTransfers = normalizeFundTransfers(cleanTrip.fundTransfers);
     const legacyFundTransferTotal = getLegacyFundTransferTotal(cleanTrip.fundTransfers);
+    const legacyDays = sanitizePositiveInteger(cleanTrip.numberOfDays, 40);
 
     return {
       id: cleanTrip.id || createId(),
       name: sanitizeTripName(cleanTrip.name) || fallbackName || DEFAULT_TRIP_NAME,
       currency: cleanTrip.currency || "EUR",
-      numberOfDays: Number.isFinite(cleanTrip.numberOfDays) ? cleanTrip.numberOfDays : 40,
+      numberOfDays: legacyDays,
+      foodNumberOfDays: sanitizePositiveInteger(cleanTrip.foodNumberOfDays, legacyDays),
+      accommodationNumberOfDays: sanitizePositiveInteger(cleanTrip.accommodationNumberOfDays, legacyDays),
       dayNumber: sanitizeDayNumber(cleanTrip.dayNumber || "D1"),
       foodBudget: sanitiseMoney(cleanTrip.foodBudget),
       accommodationBudget: sanitiseMoney(cleanTrip.accommodationBudget),
@@ -1675,7 +1709,9 @@
     appState.activeTripId = trip.id;
     appState.tripName = sanitizeTripName(trip.name) || DEFAULT_TRIP_NAME;
     appState.currency = trip.currency || "EUR";
-    appState.numberOfDays = Number.isFinite(trip.numberOfDays) ? trip.numberOfDays : 40;
+    appState.numberOfDays = sanitizePositiveInteger(trip.numberOfDays, 40);
+    appState.foodNumberOfDays = sanitizePositiveInteger(trip.foodNumberOfDays, appState.numberOfDays);
+    appState.accommodationNumberOfDays = sanitizePositiveInteger(trip.accommodationNumberOfDays, appState.numberOfDays);
     appState.dayNumber = sanitizeDayNumber(trip.dayNumber || "D1");
     appState.foodBudget = sanitiseMoney(trip.foodBudget);
     appState.accommodationBudget = sanitiseMoney(trip.accommodationBudget);
@@ -1935,6 +1971,8 @@
       appState.tripName = sanitizeTripName(parsed.tripName) || appState.tripName;
       appState.currency = parsed.currency || appState.currency;
       appState.numberOfDays = Number.isFinite(parsed.numberOfDays) ? parsed.numberOfDays : appState.numberOfDays;
+      appState.foodNumberOfDays = Number.isFinite(parsed.foodNumberOfDays) ? parsed.foodNumberOfDays : appState.numberOfDays;
+      appState.accommodationNumberOfDays = Number.isFinite(parsed.accommodationNumberOfDays) ? parsed.accommodationNumberOfDays : appState.numberOfDays;
       appState.dayNumber = parsed.dayNumber || appState.dayNumber;
       appState.foodBudget = Number.isFinite(parsed.foodBudget) ? parsed.foodBudget : appState.foodBudget;
       appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
