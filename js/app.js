@@ -1,4 +1,4 @@
-// Version #55 July 13, 2026
+// Version #56 July 13, 2026
 
 (function () {
   "use strict";
@@ -19,6 +19,7 @@
     accommodationBudget: 0,
     miscBudget: 0,
     fundAmount: 0,
+    fundPrincipalFixed: true,
     foodEntries: [],
     accommodationEntries: [],
     miscEntries: [],
@@ -422,9 +423,9 @@
     els.accommodationEntryHeading.innerHTML = (currentEditAccommodationId ? 'Edit Accommodation Entry <span>- for ' : 'Add Accommodation Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
     els.accommodationSpentTodayLabel.textContent = "Spent Today - " + dayLabel + ":";
 
-    els.miscHeading.querySelector(".section-main").textContent = "Misc. & Other - for " + dayLabel;
-    els.miscHeadingDate.textContent = headingDate;
-    els.miscEntryHeading.innerHTML = (currentEditMiscId ? 'Edit Misc. & Other Entry <span>- for ' : 'Add Misc. & Other Entry <span>- for ') + escapeHtml(dayLabel) + '</span>';
+    els.miscHeading.querySelector(".section-main").textContent = "Misc. & Other";
+    els.miscHeadingDate.textContent = "";
+    els.miscEntryHeading.textContent = currentEditMiscId ? "Edit Misc. & Other Entry" : "Add Misc. & Other Entry";
 
     renderFoodSummary();
     renderAccommodationSummary();
@@ -614,7 +615,7 @@
       item.innerHTML = [
         '<div class="entry-top">',
         '<div class="entry-main">',
-        '<div class="entry-line-1">' + escapeHtml(entry.item) + " - " + escapeHtml(entry.dayNumber) + "</div>",
+        '<div class="entry-line-1">' + escapeHtml(entry.item) + "</div>",
         '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
@@ -923,7 +924,7 @@
       return;
     }
 
-    applyAccountTransfer(fromAccount, toAccount, amount);
+    applyBudgetTransfer(fromAccount, toAccount, amount);
 
     appState.fundTransfers.push({
       id: createId(),
@@ -962,7 +963,7 @@
       return;
     }
 
-    applyAccountTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount);
+    applyBudgetTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount);
     appState.fundTransfers = appState.fundTransfers.filter(function (item) {
       return item.id !== id;
     });
@@ -970,11 +971,6 @@
     saveState();
     syncInputsFromState();
     renderAll();
-  }
-
-  function applyAccountTransfer(fromAccount, toAccount, amount) {
-    setAccountBalance(fromAccount, getAccountBalance(fromAccount) - amount);
-    setAccountBalance(toAccount, getAccountBalance(toAccount) + amount);
   }
 
   function startEditFood(id) {
@@ -1044,7 +1040,6 @@
     cancelFoodEdit(false);
     cancelAccommodationEdit(false);
     currentEditMiscId = id;
-    appState.dayNumber = entry.dayNumber;
 
     syncInputsFromState();
     renderAll();
@@ -1142,7 +1137,6 @@
 
     const confirmed = await showConfirm(
       "Delete this Misc. & Other entry?\n\n" +
-      "Day: " + entry.dayNumber + "\n" +
       "Item: " + (entry.item || entry.type) + "\n" +
       "Cost: " + formatCurrency(entry.amount) + "\n" +
       "Date: " + formatEntryDate(entry.createdAt) +
@@ -1395,12 +1389,44 @@
   }
 
   function calculateFundBalance() {
-    return Number(appState.fundAmount) || 0;
+    return appState.fundTransfers.reduce(function (balance, transfer) {
+      const amount = Number(transfer.amount) || 0;
+      const fromAccount = getTransferFromAccount(transfer);
+      const toAccount = getTransferToAccount(transfer);
+
+      if (fromAccount === "Funds") {
+        return balance - amount;
+      }
+
+      if (toAccount === "Funds") {
+        return balance + amount;
+      }
+
+      return balance;
+    }, Number(appState.fundAmount) || 0);
+  }
+
+  function calculateFundsTransferEffect(transfers) {
+    return normalizeFundTransfers(transfers).reduce(function (effect, transfer) {
+      const amount = Number(transfer.amount) || 0;
+      const fromAccount = getTransferFromAccount(transfer);
+      const toAccount = getTransferToAccount(transfer);
+
+      if (fromAccount === "Funds") {
+        return effect - amount;
+      }
+
+      if (toAccount === "Funds") {
+        return effect + amount;
+      }
+
+      return effect;
+    }, 0);
   }
 
   function getAccountBalance(accountName) {
     if (accountName === "Funds") {
-      return Number(appState.fundAmount) || 0;
+      return calculateFundBalance();
     }
 
     if (accountName === "Food") {
@@ -1414,16 +1440,24 @@
     return Number(appState.miscBudget) || 0;
   }
 
-  function setAccountBalance(accountName, amount) {
+  function applyBudgetTransfer(fromAccount, toAccount, amount) {
+    if (fromAccount !== "Funds") {
+      setSectionBudget(fromAccount, getAccountBalance(fromAccount) - amount);
+    }
+
+    if (toAccount !== "Funds") {
+      setSectionBudget(toAccount, getAccountBalance(toAccount) + amount);
+    }
+  }
+
+  function setSectionBudget(accountName, amount) {
     const cleanAmount = sanitiseBudget(amount);
 
-    if (accountName === "Funds") {
-      appState.fundAmount = cleanAmount;
-    } else if (accountName === "Food") {
+    if (accountName === "Food") {
       appState.foodBudget = cleanAmount;
     } else if (accountName === "Accommodation") {
       appState.accommodationBudget = cleanAmount;
-    } else {
+    } else if (accountName === "Misc & Other") {
       appState.miscBudget = cleanAmount;
     }
   }
@@ -1647,6 +1681,7 @@
       accommodationBudget: sanitiseMoney(appState.accommodationBudget),
       miscBudget: sanitiseMoney(appState.miscBudget),
       fundAmount: sanitiseMoney(appState.fundAmount),
+      fundPrincipalFixed: true,
       foodEntries: cloneEntries(appState.foodEntries),
       accommodationEntries: cloneEntries(appState.accommodationEntries),
       miscEntries: cloneEntries(appState.miscEntries),
@@ -1667,6 +1702,7 @@
       accommodationBudget: 0,
       miscBudget: 0,
       fundAmount: 0,
+      fundPrincipalFixed: true,
       foodEntries: [],
       accommodationEntries: [],
       miscEntries: [],
@@ -1677,7 +1713,10 @@
   function normalizeTrip(trip, fallbackName) {
     const cleanTrip = trip && typeof trip === "object" ? trip : {};
     const cleanFundTransfers = normalizeFundTransfers(cleanTrip.fundTransfers);
-    const legacyFundTransferTotal = getLegacyFundTransferTotal(cleanTrip.fundTransfers);
+    const cleanFundAmount = sanitiseMoney(cleanTrip.fundAmount);
+    const fundAmount = cleanTrip.fundPrincipalFixed === true
+      ? cleanFundAmount
+      : sanitiseBudget(cleanFundAmount - calculateFundsTransferEffect(cleanFundTransfers));
     const legacyDays = sanitizePositiveInteger(cleanTrip.numberOfDays, 40);
 
     return {
@@ -1691,7 +1730,8 @@
       foodBudget: sanitiseMoney(cleanTrip.foodBudget),
       accommodationBudget: sanitiseMoney(cleanTrip.accommodationBudget),
       miscBudget: sanitiseMoney(cleanTrip.miscBudget),
-      fundAmount: sanitiseBudget(sanitiseMoney(cleanTrip.fundAmount) - legacyFundTransferTotal),
+      fundAmount: fundAmount,
+      fundPrincipalFixed: true,
       foodEntries: Array.isArray(cleanTrip.foodEntries) ? cloneEntries(cleanTrip.foodEntries) : [],
       accommodationEntries: Array.isArray(cleanTrip.accommodationEntries) ? cloneEntries(cleanTrip.accommodationEntries) : [],
       miscEntries: Array.isArray(cleanTrip.miscEntries) ? cloneEntries(cleanTrip.miscEntries) : [],
@@ -1717,6 +1757,7 @@
     appState.accommodationBudget = sanitiseMoney(trip.accommodationBudget);
     appState.miscBudget = sanitiseMoney(trip.miscBudget);
     appState.fundAmount = sanitiseMoney(trip.fundAmount);
+    appState.fundPrincipalFixed = true;
     appState.foodEntries = Array.isArray(trip.foodEntries) ? cloneEntries(trip.foodEntries) : [];
     appState.accommodationEntries = Array.isArray(trip.accommodationEntries) ? cloneEntries(trip.accommodationEntries) : [];
     appState.miscEntries = Array.isArray(trip.miscEntries) ? cloneEntries(trip.miscEntries) : [];
@@ -1981,7 +2022,10 @@
       appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
       appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
       appState.miscEntries = Array.isArray(parsed.miscEntries) ? parsed.miscEntries : [];
-      appState.fundAmount = sanitiseBudget(appState.fundAmount - getLegacyFundTransferTotal(parsed.fundTransfers));
+      if (parsed.fundPrincipalFixed !== true) {
+        appState.fundAmount = sanitiseBudget(appState.fundAmount - calculateFundsTransferEffect(parsed.fundTransfers));
+      }
+      appState.fundPrincipalFixed = true;
       appState.fundTransfers = Array.isArray(parsed.fundTransfers) ? normalizeFundTransfers(parsed.fundTransfers) : [];
       appState.trips = Array.isArray(parsed.trips) ? parsed.trips : [];
     } catch (error) {

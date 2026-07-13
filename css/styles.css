@@ -1,4 +1,4 @@
-/* Version #55 July 13, 2026 */
+/* Version #56 July 13, 2026 */
 
 :root {
   --bg: #efefef;
@@ -143,6 +143,10 @@ label {
   display: none;
 }
 
+.day-number-block label {
+  padding-left: 48px;
+}
+
 input,
 select,
 button {
@@ -169,11 +173,6 @@ select:required:invalid {
   color: var(--blue);
   font-weight: 800;
   cursor: default;
-}
-
-#miscItemInput {
-  background: var(--food-card-bg);
-  border-color: var(--food-card-border);
 }
 
 .input-confirm-row {
@@ -661,6 +660,10 @@ select:required:invalid {
     font-size: 0.74rem;
     line-height: 1.05;
     white-space: nowrap;
+  }
+
+  .day-number-block label {
+    padding-left: 36px;
   }
 
   .settings-grid input,
