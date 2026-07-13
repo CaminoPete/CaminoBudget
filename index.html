@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #48 July 10, 2026 -->
+  <!-- Version #50 July 13, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=48" />
+  <link rel="stylesheet" href="css/styles.css?v=50" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v48</div>
+      <div class="version-tag">v50</div>
       <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
       <button type="button" id="updateAppBtn" class="update-app-btn hidden">Update App</button>
     </header>
@@ -252,19 +252,23 @@
         <div class="entry-row misc-entry-row">
           <input id="miscItemInput" list="miscItemOptions" type="text" maxlength="60" placeholder="Item" />
           <datalist id="miscItemOptions">
-            <option value="Transportation"></option>
+            <option value="OTHER"></option>
+            <option value="MISC."></option>
             <option value="Laundry"></option>
             <option value="Medical"></option>
-            <option value="Pilgrim Passport"></option>
-            <option value="Camino Shell"></option>
             <option value="Entry Fees"></option>
-            <option value="Certificate de Compostela"></option>
             <option value="Clothing"></option>
             <option value="Souvenirs"></option>
             <option value="Donations"></option>
-            <option value="Other"></option>
             <option value="Cell Phone"></option>
             <option value="Bank Fees"></option>
+            <option value="Transportation"></option>
+            <option value="Paris Accommodation"></option>
+            <option value="SJPP Accommodation"></option>
+            <option value="Porto Accommodation"></option>
+            <option value="Pilgrim Passport"></option>
+            <option value="Camino Shell"></option>
+            <option value="Certificate de Compostela"></option>
           </datalist>
 
           <div class="amount-payment-row">
@@ -407,6 +411,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=48"></script>
+  <script src="js/app.js?v=50"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Version #48 July 10, 2026
+// Version #50 July 13, 2026
 
 (function () {
   "use strict";
@@ -596,7 +596,6 @@
     sorted.forEach(function (entry) {
       const item = document.createElement("div");
       item.className = "entry-item " + dayClassMap[entry.dayKey];
-      const paymentText = "Paid: " + escapeHtml(getEntryPaymentMethod(entry));
 
       const noteText = entry.note ? " - Note: " + escapeHtml(entry.note) : "";
 
@@ -604,7 +603,7 @@
         '<div class="entry-top">',
         '<div class="entry-main">',
         '<div class="entry-line-1">' + escapeHtml(entry.item) + " - " + escapeHtml(entry.dayNumber) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + " - " + paymentText + noteText + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
         "</div>",
