@@ -1,4 +1,4 @@
-/* Version #50 July 13, 2026 */
+/* Version #51 July 13, 2026 */
 
 :root {
   --bg: #efefef;
@@ -22,8 +22,8 @@
   --entry-food-b: #f7edbf;
   --entry-acc-a: #eef6ff;
   --entry-acc-b: #ddeeff;
-  --entry-misc-a: #f3ebc9;
-  --entry-misc-b: #f3ebc9;
+  --entry-misc-a: var(--misc-card-bg);
+  --entry-misc-b: var(--misc-card-bg);
   --white: #fff;
   --danger: #9f2d2d;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -494,10 +494,12 @@ select:required:invalid {
 
 .entry-item.misc-day-a {
   background: var(--entry-misc-a);
+  border-color: var(--misc-card-border);
 }
 
 .entry-item.misc-day-b {
   background: var(--entry-misc-b);
+  border-color: var(--misc-card-border);
 }
 
 .entry-top {
