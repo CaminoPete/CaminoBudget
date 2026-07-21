@@ -1,4 +1,4 @@
-/* Version #59 July 21, 2026 */
+/* Version #60 July 21, 2026 */
 
 :root {
   --bg: #efefef;
@@ -807,9 +807,17 @@ select:required:invalid {
   margin-top: 10px;
 }
 
+.backup-button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .trip-button-row .primary-btn,
 .trip-button-row .secondary-btn,
-.trip-button-row .danger-btn {
+.trip-button-row .danger-btn,
+.backup-button-row .primary-btn,
+.backup-button-row .secondary-btn {
   width: 100%;
 }
 
@@ -827,7 +835,8 @@ select:required:invalid {
   }
 
   .trip-management-grid,
-  .trip-button-row {
+  .trip-button-row,
+  .backup-button-row {
     grid-template-columns: 1fr;
   }
 }

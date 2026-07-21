@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Version #59 July 21, 2026 -->
+  <!-- Version #60 July 21, 2026 -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0d3d78" />
   <title>Trip Budget Tracker</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="css/styles.css?v=59" />
+  <link rel="stylesheet" href="css/styles.css?v=60" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <h1>Trip Budget Tracker</h1>
-      <div class="version-tag">v59</div>
+      <div class="version-tag">v60</div>
       <div id="tripNameDisplay" class="trip-name-tag">Camino 2026</div>
       <button type="button" id="updateAppBtn" class="update-app-btn hidden">Update App</button>
     </header>
@@ -404,6 +404,16 @@
         </div>
       </section>
 
+      <section class="trip-panel backup-panel" aria-labelledby="backupToolsHeading">
+        <h2 id="backupToolsHeading" class="trip-tools-title">Backup</h2>
+
+        <div class="backup-button-row">
+          <button type="button" id="exportBackupBtn" class="primary-btn">Export Backup</button>
+          <button type="button" id="importBackupBtn" class="secondary-btn">Import Backup</button>
+          <input id="backupFileInput" class="hidden" type="file" accept="application/json,.json" />
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -420,6 +430,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=59"></script>
+  <script src="js/app.js?v=60"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Version #59 July 21, 2026
+// Version #60 July 21, 2026
 
 (function () {
   "use strict";
@@ -121,7 +121,10 @@
     confirmTripNameBtn: document.getElementById("confirmTripNameBtn"),
     addTripBtn: document.getElementById("addTripBtn"),
     renameTripBtn: document.getElementById("renameTripBtn"),
-    deleteTripBtn: document.getElementById("deleteTripBtn")
+    deleteTripBtn: document.getElementById("deleteTripBtn"),
+    exportBackupBtn: document.getElementById("exportBackupBtn"),
+    importBackupBtn: document.getElementById("importBackupBtn"),
+    backupFileInput: document.getElementById("backupFileInput")
   };
 
   const layoutEls = {
@@ -318,6 +321,20 @@
 
     els.deleteTripBtn.addEventListener("click", async function () {
       await deleteCurrentTrip();
+    });
+
+    els.exportBackupBtn.addEventListener("click", function () {
+      exportBackup();
+    });
+
+    els.importBackupBtn.addEventListener("click", function () {
+      els.backupFileInput.value = "";
+      els.backupFileInput.click();
+    });
+
+    els.backupFileInput.addEventListener("change", async function () {
+      await importBackupFromFile(els.backupFileInput.files && els.backupFileInput.files[0]);
+      els.backupFileInput.value = "";
     });
 
     els.updateAppBtn.addEventListener("click", async function () {
@@ -1993,6 +2010,91 @@
     renderAll();
   }
 
+  function exportBackup() {
+    saveState();
+
+    const payload = {
+      backupType: "TripBudgetTrackerBackup",
+      backupVersion: 1,
+      exportedAt: new Date().toISOString(),
+      data: JSON.parse(JSON.stringify(appState))
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = buildBackupFileName();
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  async function importBackupFromFile(file) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await readFileAsText(file);
+      const parsed = JSON.parse(text);
+      const backupData = parsed && parsed.backupType === "TripBudgetTrackerBackup" && parsed.data
+        ? parsed.data
+        : parsed;
+
+      if (!backupData || typeof backupData !== "object") {
+        await showInfo("That backup file could not be read.");
+        return;
+      }
+
+      const confirmed = await showConfirm(
+        "Import this backup?\n\nThis will replace the data currently in the app."
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      applyLoadedState(backupData);
+      ensureTripState();
+      cancelFoodEdit(false);
+      cancelAccommodationEdit(false);
+      cancelMiscEdit(false);
+      clearFoodEntryInputs();
+      clearAccommodationEntryInputs();
+      clearMiscEntryInputs();
+      saveState();
+      syncInputsFromState();
+      renderAll();
+      await showInfo("Backup imported.");
+    } catch (error) {
+      console.error("Could not import backup.", error);
+      await showInfo("That backup file could not be imported.");
+    }
+  }
+
+  function readFileAsText(file) {
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader();
+
+      reader.onload = function () {
+        resolve(String(reader.result || ""));
+      };
+      reader.onerror = function () {
+        reject(reader.error || new Error("Could not read file."));
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  function buildBackupFileName() {
+    const tripName = sanitizeTripName(appState.tripName).replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "") || "trip";
+    const stamp = new Date().toISOString().slice(0, 10);
+
+    return "trip-budget-" + tripName.toLowerCase() + "-" + stamp + ".json";
+  }
+
   function saveState() {
     updateActiveTripFromState();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -2006,31 +2108,33 @@
         return;
       }
 
-      const parsed = JSON.parse(raw);
-
-      appState.activeTripId = parsed.activeTripId || appState.activeTripId;
-      appState.tripName = sanitizeTripName(parsed.tripName) || appState.tripName;
-      appState.currency = parsed.currency || appState.currency;
-      appState.numberOfDays = Number.isFinite(parsed.numberOfDays) ? parsed.numberOfDays : appState.numberOfDays;
-      appState.foodNumberOfDays = Number.isFinite(parsed.foodNumberOfDays) ? parsed.foodNumberOfDays : appState.numberOfDays;
-      appState.accommodationNumberOfDays = Number.isFinite(parsed.accommodationNumberOfDays) ? parsed.accommodationNumberOfDays : appState.numberOfDays;
-      appState.dayNumber = parsed.dayNumber || appState.dayNumber;
-      appState.foodBudget = Number.isFinite(parsed.foodBudget) ? parsed.foodBudget : appState.foodBudget;
-      appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
-      appState.miscBudget = Number.isFinite(parsed.miscBudget) ? parsed.miscBudget : appState.miscBudget;
-      appState.fundAmount = Number.isFinite(parsed.fundAmount) ? parsed.fundAmount : appState.fundAmount;
-      appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
-      appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
-      appState.miscEntries = Array.isArray(parsed.miscEntries) ? parsed.miscEntries : [];
-      if (parsed.fundPrincipalFixed !== true) {
-        appState.fundAmount = sanitiseBudget(appState.fundAmount - calculateFundsTransferEffect(parsed.fundTransfers));
-      }
-      appState.fundPrincipalFixed = true;
-      appState.fundTransfers = Array.isArray(parsed.fundTransfers) ? normalizeFundTransfers(parsed.fundTransfers) : [];
-      appState.trips = Array.isArray(parsed.trips) ? parsed.trips : [];
+      applyLoadedState(JSON.parse(raw));
     } catch (error) {
       console.error("Could not load saved app data.", error);
     }
+  }
+
+  function applyLoadedState(parsed) {
+    appState.activeTripId = parsed.activeTripId || appState.activeTripId;
+    appState.tripName = sanitizeTripName(parsed.tripName) || appState.tripName;
+    appState.currency = parsed.currency || appState.currency;
+    appState.numberOfDays = Number.isFinite(parsed.numberOfDays) ? parsed.numberOfDays : appState.numberOfDays;
+    appState.foodNumberOfDays = Number.isFinite(parsed.foodNumberOfDays) ? parsed.foodNumberOfDays : appState.numberOfDays;
+    appState.accommodationNumberOfDays = Number.isFinite(parsed.accommodationNumberOfDays) ? parsed.accommodationNumberOfDays : appState.numberOfDays;
+    appState.dayNumber = parsed.dayNumber || appState.dayNumber;
+    appState.foodBudget = Number.isFinite(parsed.foodBudget) ? parsed.foodBudget : appState.foodBudget;
+    appState.accommodationBudget = Number.isFinite(parsed.accommodationBudget) ? parsed.accommodationBudget : appState.accommodationBudget;
+    appState.miscBudget = Number.isFinite(parsed.miscBudget) ? parsed.miscBudget : appState.miscBudget;
+    appState.fundAmount = Number.isFinite(parsed.fundAmount) ? parsed.fundAmount : appState.fundAmount;
+    appState.foodEntries = Array.isArray(parsed.foodEntries) ? parsed.foodEntries : [];
+    appState.accommodationEntries = Array.isArray(parsed.accommodationEntries) ? parsed.accommodationEntries : [];
+    appState.miscEntries = Array.isArray(parsed.miscEntries) ? parsed.miscEntries : [];
+    if (parsed.fundPrincipalFixed !== true) {
+      appState.fundAmount = sanitiseBudget(appState.fundAmount - calculateFundsTransferEffect(parsed.fundTransfers));
+    }
+    appState.fundPrincipalFixed = true;
+    appState.fundTransfers = Array.isArray(parsed.fundTransfers) ? normalizeFundTransfers(parsed.fundTransfers) : [];
+    appState.trips = Array.isArray(parsed.trips) ? parsed.trips : [];
   }
 
   function showInfo(message) {
