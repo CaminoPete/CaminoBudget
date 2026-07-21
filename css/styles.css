@@ -1,4 +1,4 @@
-/* Version #57 July 21, 2026 */
+/* Version #58 July 21, 2026 */
 
 :root {
   --bg: #efefef;
@@ -14,16 +14,16 @@
   --food-card-border: #d9ca85;
   --acc-card-bg: #e3f0ff;
   --acc-card-border: #b9d3f3;
-  --misc-card-bg: #f3e4bb;
-  --misc-card-border: #d5b96f;
-  --funds-card-bg: #e2f3d8;
-  --funds-card-border: #afd091;
+  --misc-card-bg: #f0d4c4;
+  --misc-card-border: #c6815f;
+  --funds-card-bg: #d4f0cf;
+  --funds-card-border: #7fbd73;
   --entry-food-a: #fff6cf;
   --entry-food-b: #f7edbf;
   --entry-acc-a: #eef6ff;
   --entry-acc-b: #ddeeff;
-  --entry-misc-a: #f7e9bf;
-  --entry-misc-b: #efdcaa;
+  --entry-misc-a: #f4d9c9;
+  --entry-misc-b: #ebc7b5;
   --white: #fff;
   --danger: #9f2d2d;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
