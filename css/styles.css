@@ -1,4 +1,4 @@
-/* Version #64 August 10, 2026 */
+/* Version #65 August 10, 2026 */
 
 :root {
   --bg: #efefef;
@@ -811,6 +811,15 @@ select:required:invalid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.backup-status {
+  min-height: 22px;
+  margin-top: 8px;
+  color: var(--blue);
+  font-size: 0.9rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .trip-button-row .primary-btn,
