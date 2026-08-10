@@ -1,4 +1,4 @@
-// Version #64 August 10, 2026
+// Version #65 August 10, 2026
 
 (function () {
   "use strict";
@@ -124,7 +124,8 @@
     deleteTripBtn: document.getElementById("deleteTripBtn"),
     exportBackupBtn: document.getElementById("exportBackupBtn"),
     importBackupBtn: document.getElementById("importBackupBtn"),
-    backupFileInput: document.getElementById("backupFileInput")
+    backupFileInput: document.getElementById("backupFileInput"),
+    backupStatus: document.getElementById("backupStatus")
   };
 
   const layoutEls = {
@@ -2114,13 +2115,17 @@
 
     const fileName = buildBackupFileName();
 
+    setBackupStatus("Backup created: " + fileName);
     link.href = url;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    await showInfo("Backup created:\n\n" + fileName);
+  }
+
+  function setBackupStatus(message) {
+    els.backupStatus.textContent = message || "";
   }
 
   async function importBackupFromFile(file) {
