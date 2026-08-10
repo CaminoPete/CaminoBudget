@@ -1,4 +1,4 @@
-// Version #63 August 10, 2026
+// Version #64 August 10, 2026
 
 (function () {
   "use strict";
@@ -323,8 +323,8 @@
       await deleteCurrentTrip();
     });
 
-    els.exportBackupBtn.addEventListener("click", function () {
-      exportBackup();
+    els.exportBackupBtn.addEventListener("click", async function () {
+      await exportBackup();
     });
 
     els.importBackupBtn.addEventListener("click", function () {
@@ -2099,7 +2099,7 @@
     renderAll();
   }
 
-  function exportBackup() {
+  async function exportBackup() {
     saveState();
 
     const payload = {
@@ -2112,12 +2112,15 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
+    const fileName = buildBackupFileName();
+
     link.href = url;
-    link.download = buildBackupFileName();
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    await showInfo("Backup created:\n\n" + fileName);
   }
 
   async function importBackupFromFile(file) {
