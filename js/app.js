@@ -1,4 +1,4 @@
-// Version #60 July 21, 2026
+// Version #62 August 10, 2026
 
 (function () {
   "use strict";
@@ -723,6 +723,10 @@
         return;
       }
 
+      if (!(await canSpendFromBudget("Food", amount, Number(entry.amount) || 0))) {
+        return;
+      }
+
       entry.type = type;
       entry.amount = amount;
       entry.paymentMethod = paymentMethod;
@@ -735,6 +739,10 @@
       saveState();
       renderAll();
       await showInfo("Food entry updated.");
+      return;
+    }
+
+    if (!(await canSpendFromBudget("Food", amount, 0))) {
       return;
     }
 
@@ -777,6 +785,10 @@
         return;
       }
 
+      if (!(await canSpendFromBudget("Accommodation", amount, Number(entry.amount) || 0))) {
+        return;
+      }
+
       entry.type = type;
       entry.amount = amount;
       entry.paymentMethod = paymentMethod;
@@ -810,6 +822,10 @@
         return;
       }
 
+      if (!(await canSpendFromBudget("Accommodation", amount, Number(existingForDay.amount) || 0))) {
+        return;
+      }
+
       existingForDay.type = type;
       existingForDay.amount = amount;
       existingForDay.paymentMethod = paymentMethod;
@@ -820,6 +836,10 @@
       clearAccommodationEntryInputs();
       saveState();
       renderAll();
+      return;
+    }
+
+    if (!(await canSpendFromBudget("Accommodation", amount, 0))) {
       return;
     }
 
@@ -867,6 +887,10 @@
         return;
       }
 
+      if (!(await canSpendFromBudget("Misc & Other", amount, Number(entry.amount) || 0))) {
+        return;
+      }
+
       entry.item = itemName;
       entry.type = itemName;
       entry.amount = amount;
@@ -880,6 +904,10 @@
       saveState();
       renderAll();
       await showInfo("Misc. & Other entry updated.");
+      return;
+    }
+
+    if (!(await canSpendFromBudget("Misc & Other", amount, 0))) {
       return;
     }
 
@@ -920,15 +948,12 @@
       return;
     }
 
-    if (amount > getAccountBalance(fromAccount)) {
-      const confirmed = await showConfirm(
-        "This transfer is greater than the current " + fromAccount + " balance.\n\nContinue anyway?"
+    if (amount > getAvailableAccountBalance(fromAccount)) {
+      await showInfo(
+        "That transfer is more than the available " + fromAccount + " balance.\n\n" +
+        "Available: " + formatCurrency(getAvailableAccountBalance(fromAccount))
       );
-
-      if (!confirmed) {
-        resetFundTransferInputs();
-        return;
-      }
+      return;
     }
 
     const confirmed = await showConfirm(
@@ -941,7 +966,13 @@
       return;
     }
 
-    applyBudgetTransfer(fromAccount, toAccount, amount);
+    if (!applyBudgetTransfer(fromAccount, toAccount, amount)) {
+      await showInfo(
+        "That transfer is more than the available " + fromAccount + " balance.\n\n" +
+        "Available: " + formatCurrency(getAvailableAccountBalance(fromAccount))
+      );
+      return;
+    }
 
     appState.fundTransfers.push({
       id: createId(),
@@ -980,7 +1011,7 @@
       return;
     }
 
-    applyBudgetTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount);
+    applyBudgetTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount, false);
     appState.fundTransfers = appState.fundTransfers.filter(function (item) {
       return item.id !== id;
     });
@@ -1457,7 +1488,51 @@
     return Number(appState.miscBudget) || 0;
   }
 
-  function applyBudgetTransfer(fromAccount, toAccount, amount) {
+  function getAvailableAccountBalance(accountName) {
+    if (accountName === "Funds") {
+      return calculateFundBalance();
+    }
+
+    return getAccountBalance(accountName) - getSpentForAccount(accountName);
+  }
+
+  function getSpentForAccount(accountName) {
+    if (accountName === "Food") {
+      return sumEntries(appState.foodEntries);
+    }
+
+    if (accountName === "Accommodation") {
+      return sumEntries(appState.accommodationEntries);
+    }
+
+    if (accountName === "Misc & Other") {
+      return sumEntries(appState.miscEntries);
+    }
+
+    return 0;
+  }
+
+  async function canSpendFromBudget(accountName, amount, existingAmount) {
+    const available = getAvailableAccountBalance(accountName) + (Number(existingAmount) || 0);
+
+    if (amount <= available) {
+      return true;
+    }
+
+    await showInfo(
+      "That entry is more than the available " + accountName + " budget.\n\n" +
+      "Available: " + formatCurrency(available)
+    );
+    return false;
+  }
+
+  function applyBudgetTransfer(fromAccount, toAccount, amount, enforceAvailable) {
+    const shouldEnforceAvailable = enforceAvailable !== false;
+
+    if (shouldEnforceAvailable && amount > getAvailableAccountBalance(fromAccount)) {
+      return false;
+    }
+
     if (fromAccount !== "Funds") {
       setSectionBudget(fromAccount, getAccountBalance(fromAccount) - amount);
     }
@@ -1465,6 +1540,8 @@
     if (toAccount !== "Funds") {
       setSectionBudget(toAccount, getAccountBalance(toAccount) + amount);
     }
+
+    return true;
   }
 
   function setSectionBudget(accountName, amount) {
@@ -1940,6 +2017,12 @@
 
   async function deleteCurrentTrip() {
     const activeTrip = findActiveTrip();
+    const activeIndex = appState.trips.findIndex(function (trip) {
+      return activeTrip && trip.id === activeTrip.id;
+    });
+    const nextTrip = activeIndex === -1
+      ? null
+      : (appState.trips[activeIndex + 1] || appState.trips[activeIndex - 1]);
 
     if (!activeTrip) {
       await showInfo("The current trip could not be found.");
@@ -1948,6 +2031,11 @@
 
     if (appState.trips.length <= 1) {
       await showInfo("You need at least one trip.");
+      return;
+    }
+
+    if (!nextTrip) {
+      await showInfo("The next trip could not be found.");
       return;
     }
 
@@ -1970,8 +2058,9 @@
     clearFoodEntryInputs();
     clearAccommodationEntryInputs();
     clearMiscEntryInputs();
-    applyTripToState(appState.trips[0]);
-    saveState();
+    applyTripToState(nextTrip);
+    updateActiveTripFromState();
+    persistState();
     syncInputsFromState();
     renderAll();
     await showInfo("Trip deleted.");
@@ -2097,6 +2186,10 @@
 
   function saveState() {
     updateActiveTripFromState();
+    persistState();
+  }
+
+  function persistState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   }
 
