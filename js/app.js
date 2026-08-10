@@ -1,4 +1,4 @@
-// Version #62 August 10, 2026
+// Version #63 August 10, 2026
 
 (function () {
   "use strict";
@@ -2179,9 +2179,15 @@
 
   function buildBackupFileName() {
     const tripName = sanitizeTripName(appState.tripName).replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "") || "trip";
-    const stamp = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const stamp = now.toISOString().slice(0, 10);
+    const time = [
+      String(now.getHours()).padStart(2, "0"),
+      String(now.getMinutes()).padStart(2, "0"),
+      String(now.getSeconds()).padStart(2, "0")
+    ].join("");
 
-    return "trip-budget-" + tripName.toLowerCase() + "-" + stamp + ".json";
+    return "trip-budget-" + tripName.toLowerCase() + "-" + stamp + "-" + time + ".json";
   }
 
   function saveState() {
