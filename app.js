@@ -1,4 +1,4 @@
-// Version #61 August 10, 2026
+// Version #62 August 10, 2026
 
 (function () {
   "use strict";
@@ -966,7 +966,13 @@
       return;
     }
 
-    applyBudgetTransfer(fromAccount, toAccount, amount);
+    if (!applyBudgetTransfer(fromAccount, toAccount, amount)) {
+      await showInfo(
+        "That transfer is more than the available " + fromAccount + " balance.\n\n" +
+        "Available: " + formatCurrency(getAvailableAccountBalance(fromAccount))
+      );
+      return;
+    }
 
     appState.fundTransfers.push({
       id: createId(),
@@ -1005,7 +1011,7 @@
       return;
     }
 
-    applyBudgetTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount);
+    applyBudgetTransfer(getTransferToAccount(transfer), getTransferFromAccount(transfer), transfer.amount, false);
     appState.fundTransfers = appState.fundTransfers.filter(function (item) {
       return item.id !== id;
     });
@@ -1520,7 +1526,13 @@
     return false;
   }
 
-  function applyBudgetTransfer(fromAccount, toAccount, amount) {
+  function applyBudgetTransfer(fromAccount, toAccount, amount, enforceAvailable) {
+    const shouldEnforceAvailable = enforceAvailable !== false;
+
+    if (shouldEnforceAvailable && amount > getAvailableAccountBalance(fromAccount)) {
+      return false;
+    }
+
     if (fromAccount !== "Funds") {
       setSectionBudget(fromAccount, getAccountBalance(fromAccount) - amount);
     }
@@ -1528,6 +1540,8 @@
     if (toAccount !== "Funds") {
       setSectionBudget(toAccount, getAccountBalance(toAccount) + amount);
     }
+
+    return true;
   }
 
   function setSectionBudget(accountName, amount) {
@@ -2003,6 +2017,12 @@
 
   async function deleteCurrentTrip() {
     const activeTrip = findActiveTrip();
+    const activeIndex = appState.trips.findIndex(function (trip) {
+      return activeTrip && trip.id === activeTrip.id;
+    });
+    const nextTrip = activeIndex === -1
+      ? null
+      : (appState.trips[activeIndex + 1] || appState.trips[activeIndex - 1]);
 
     if (!activeTrip) {
       await showInfo("The current trip could not be found.");
@@ -2011,6 +2031,11 @@
 
     if (appState.trips.length <= 1) {
       await showInfo("You need at least one trip.");
+      return;
+    }
+
+    if (!nextTrip) {
+      await showInfo("The next trip could not be found.");
       return;
     }
 
@@ -2033,8 +2058,9 @@
     clearFoodEntryInputs();
     clearAccommodationEntryInputs();
     clearMiscEntryInputs();
-    applyTripToState(appState.trips[0]);
-    saveState();
+    applyTripToState(nextTrip);
+    updateActiveTripFromState();
+    persistState();
     syncInputsFromState();
     renderAll();
     await showInfo("Trip deleted.");
@@ -2160,6 +2186,10 @@
 
   function saveState() {
     updateActiveTripFromState();
+    persistState();
+  }
+
+  function persistState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   }
 
