@@ -1,4 +1,4 @@
-// Version #65 August 10, 2026
+// Version #2 August 15, 2026
 
 (function () {
   "use strict";
@@ -622,11 +622,10 @@
       return;
     }
 
-    const dayClassMap = buildDayAlternatingMap(sorted, "misc");
-
     sorted.forEach(function (entry) {
       const item = document.createElement("div");
-      item.className = "entry-item " + dayClassMap[entry.dayKey];
+      item.className = "entry-item misc-entry";
+      const paymentText = "Paid: " + escapeHtml(getEntryPaymentMethod(entry));
 
       const noteText = entry.note ? " - Note: " + escapeHtml(entry.note) : "";
 
@@ -634,7 +633,7 @@
         '<div class="entry-top">',
         '<div class="entry-main">',
         '<div class="entry-line-1">' + escapeHtml(entry.item) + "</div>",
-        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + noteText + "</div>",
+        '<div class="entry-line-2">Date: ' + escapeHtml(formatEntryDate(entry.createdAt)) + " - " + paymentText + noteText + "</div>",
         "</div>",
         '<div class="entry-amount">' + escapeHtml(formatCurrency(entry.amount)) + "</div>",
         "</div>",
@@ -897,8 +896,6 @@
       entry.amount = amount;
       entry.paymentMethod = paymentMethod;
       entry.note = note;
-      entry.dayNumber = appState.dayNumber;
-      entry.dayKey = buildDaySortKey(appState.dayNumber);
 
       cancelMiscEdit(false);
       clearMiscEntryInputs();
@@ -919,8 +916,6 @@
       amount: amount,
       paymentMethod: paymentMethod,
       note: note,
-      dayNumber: appState.dayNumber,
-      dayKey: buildDaySortKey(appState.dayNumber),
       createdAt: new Date().toISOString()
     });
 
